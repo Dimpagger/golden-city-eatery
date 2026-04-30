@@ -1,0 +1,22 @@
+# Build output
+build/
+*.o
+*.a
+*.exe
+*.dylib
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# vcpkg
+vcpkg/
+buildtrees/
+downloads/
+packages/
