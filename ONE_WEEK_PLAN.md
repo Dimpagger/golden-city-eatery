@@ -43,20 +43,22 @@
 | 技术 | 选择 | 理由 |
 |------|------|------|
 | **图形库** | Raylib | 内置渲染/UI/音频，比 SDL2 减少 1000+ 行样板代码 |
-| **构建系统** | CMake | 跨平台，支持 vcpkg |
+| **构建系统** | Make | 跨平台，raylib-cpp-starter 模板 |
 | **语言** | C++17 | 性能优先 |
 | **AI 辅助** | Claude Code | 提升 3-5 倍开发效率 |
 
 ### 2.2 项目依赖
 
-```json
-{
-    "dependencies": [
-        "raylib",
-        "nlohmann-json"
-    ]
-}
+通过 git submodule 管理：
+
 ```
+vendor/
+├── raylib/         # https://github.com/raysan5/raylib
+└── raylib-cpp/     # https://github.com/robloach/raylib-cpp
+```
+
+- `make setup` 自动拉取 submodule 并编译 raylib 静态库
+- 头文件拷贝到 `include/`，库文件拷贝到 `lib/`
 
 ---
 
@@ -110,7 +112,7 @@
 ### 4.1 项目结构
 
 ```
-RoujiamoLegend/
+golden-city-eatery/
 ├── src/
 │   ├── main.cpp           # 入口
 │   ├── Game.cpp/h         # 游戏主逻辑
@@ -124,9 +126,14 @@ RoujiamoLegend/
 │   ├── UpgradeSystem.cpp/h # 升级系统
 │   ├── UI.cpp/h           # UI 显示
 │   └── Constants.h        # 常量定义
+├── include/               # 头文件 (make setup 生成)
+├── lib/                   # 静态库 (make setup 生成)
+├── vendor/                # git submodule
+│   ├── raylib/
+│   └── raylib-cpp/
 ├── assets/                # 资源目录 (空，色块方案)
-├── CMakeLists.txt
-└── vcpkg.json
+├── Makefile
+└── README.md
 ```
 
 ### 4.2 类图
@@ -257,7 +264,7 @@ struct Upgrade {
 
 | 程序员 A | 程序员 B |
 |----------|----------|
-| CMake + Raylib 初始化 | Constants.h 常量定义 |
+| Make + Raylib 初始化 | Constants.h 常量定义 |
 | 窗口创建 + 主循环 | 枚举类型定义 |
 | 基础绘制函数封装 | Logger 工具 |
 | **交付**: 空窗口可运行 | **交付**: 接口定义 |
