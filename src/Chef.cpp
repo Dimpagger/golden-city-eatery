@@ -17,28 +17,22 @@ void Chef::Update(float dt) {
     if (x > SCREEN_WIDTH - w) x = SCREEN_WIDTH - w;
 }
 
-void Chef::Draw() const {
-    DrawRectangle((int)x, (int)y, (int)w, (int)h, BLUE);
-}
-
 raylib::Rectangle Chef::GetRect() const {
     return {x, y, w, h};
 }
 
 bool Chef::IsHoldingFood() const { return heldFood != nullptr; }
 
-Food* Chef::GetHeldFood() const { return heldFood; }
+Food* Chef::GetHeldFood() const { return heldFood.get(); }
 
-void Chef::PickUpFood(Food* food) {
-    heldFood = food;
+void Chef::PickUpFood(std::unique_ptr<Food> food) {
+    heldFood = std::move(food);
     if (heldFood) heldFood->PickUp();
 }
 
-Food* Chef::DropFood() {
-    Food* f = heldFood;
-    heldFood = nullptr;
-    if (f) f->PutDown();
-    return f;
+std::unique_ptr<Food> Chef::DropFood() {
+    if (heldFood) heldFood->PutDown();
+    return std::move(heldFood);
 }
 
 void Chef::SetSpeed(float s) { speed = s; }

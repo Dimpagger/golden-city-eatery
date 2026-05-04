@@ -1,14 +1,15 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include "Constants.h"
 #include "GameTypes.h"
 #include "Station.h"
 #include "Chef.h"
-#include "Customer.h"
+#include "CustomerManager.h"
 #include "UpgradeSystem.h"
 
-enum class GameState { MENU, PLAYING, GAME_OVER };
+enum class GameState { MENU, PLAYING, DAY_COMPLETE, GAME_OVER, VICTORY };
 
 class Game {
 public:
@@ -22,6 +23,7 @@ public:
 
 private:
     void Reset();
+    void StartDay(int day);
     void ApplyUpgrades();
     void HandleUpgradeInput();
     void UpdatePlaying(float dt);
@@ -29,18 +31,23 @@ private:
 
     Station* GetNearbyStation();
 
+    void LoadHighScore();
+    void SaveHighScore();
+
+    static float GetDayMultiplier(int day);
+
     GameState state = GameState::MENU;
     Chef chef;
 
     Station stations[STATION_COUNT];
-
-    std::vector<Customer*> customers;
-    float spawnTimer = 0.0f;
-    float spawnInterval = 0.0f;
+    CustomerManager customerMgr;
 
     int coins = 0;
     int score = 0;
-    int lostCustomers = 0;
+    int bestScore = 0;
+    int streak = 0;
+    int currentDay = 1;
+    int servedToday = 0;
 
     bool paused = false;
 
@@ -53,9 +60,17 @@ private:
 
     float gameOverTimer = 0.0f;
 
+    float milestoneTimer = 0.0f;
+    int milestoneStreak = 0;
+
+    int lastLostCount = 0;
+
     struct FloatText {
         float x, y;
         float timer = 1.0f;
+        int value = 10;
     };
     std::vector<FloatText> floatTexts;
+
+    static const std::string HIGH_SCORE_FILE;
 };

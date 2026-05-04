@@ -1,0 +1,94 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # ── macOS ARM64 (Apple Silicon) ──────────────────────
+  build-macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: |
+          make setup
+          make bin/app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RoujiamoLegend-macOS-arm64
+          path: bin/app
+
+  # ── macOS x86_64 (Intel) ─────────────────────────────
+  build-macos-x86_64:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: |
+          make setup
+          make bin/app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RoujiamoLegend-macOS-x86_64
+          path: bin/app
+
+  # ── Windows x86_64 ───────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MinGW
+        run: choco install mingw --no-progress -y
+
+      - name: Build
+        shell: cmd
+        run: |
+          set PATH=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin;%PATH%
+          mingw32-make setup
+          mingw32-make bin/app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RoujiamoLegend-Windows-x86_64
+          path: bin/app.exe
+
+  # ── Linux x86_64 ─────────────────────────────────────
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libx11-dev libgl1-mesa-dev libasound2-dev libpulse-dev
+
+      - name: Build
+        run: |
+          make setup
+          make bin/app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RoujiamoLegend-Linux-x86_64
+          path: bin/app

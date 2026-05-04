@@ -8,14 +8,19 @@
 
 class UI {
 public:
+    static void SetFont(Font font);
+
     // ── Full Screens ──────────────────────────────────
     static void DrawMenuScreen();
-    static void DrawGameOverScreen(int score, int coins, int lost);
+    static void DrawGameOverScreen(int score, int coins, int lost, int bestScore, int day);
+    static void DrawDayCompleteScreen(int day, int score, int coins);
+    static void DrawVictoryScreen(int score, int coins, int bestScore);
     static void DrawPauseOverlay();
 
     // ── HUD ───────────────────────────────────────────
     static void DrawTopBar(int coins, int score, int queueCount,
-                           int lostCount, int maxLost);
+                           int lostCount, int maxLost, int bestScore, int streak,
+                           int currentDay, int servedToday);
 
     // ── Game Entities ─────────────────────────────────
     static void DrawStation(const Station& s, const char* label,
@@ -31,12 +36,16 @@ public:
     static void DrawControlsHint();
 
     // ── Effects ───────────────────────────────────────
-    static void DrawFloatText(float x, float y, float alpha);
+    static void DrawFloatText(float x, float y, float alpha, int value);
+    static void DrawMilestone(int streak, float timer);
     static void DrawGameOverFlash(float alpha);
 
 private:
     // ── Helpers ───────────────────────────────────────
     static void DrawPanel(float x, float y, float w, float h, Color bg);
+    static int TextWidth(const char* text, int size);
     static const char* FoodStateLabel(FoodState state);
     static const char* CustomerFace(const Customer& c);
+
+    static Font s_font;
 };

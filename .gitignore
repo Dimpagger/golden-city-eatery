@@ -1,13 +1,22 @@
+# 字体资源（自动生成，仅源文件 gitignore）
+assets/fonts/*.ttf
+
 # 构建产物 (make setup 生成)
 include
 lib
 bin
+
+# LSP
+compile_commands.json
 
 # IDE
 .idea
 .vscode
 *.swp
 *.swo
+
+# 游戏存档
+highscore.dat
 
 # 系统文件
 .DS_Store

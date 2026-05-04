@@ -46,13 +46,11 @@ bool UpgradeSystem::Purchase(UpgradeType type, int& coins) {
 float UpgradeSystem::GetSpeedMultiplier(UpgradeType type) const {
     int level = GetLevel(type);
     if (type == UpgradeType::CHEF_SPEED) {
-        // +20% speed per level: 1.0 → 2.0
+        // +20% speed per level: 1.0 → 1.8
         return 1.0f + 0.2f * level;
     } else {
-        // -20% time per level: 1.0 → 0.2
-        float reduction = 0.2f * level;
-        if (reduction > 0.8f) reduction = 0.8f;
-        return 1.0f - reduction;
+        // -20% time per level: 1.0 → 0.2 (level 4)
+        return 1.0f - 0.2f * level;
     }
 }
 
@@ -63,12 +61,5 @@ void UpgradeSystem::Reset() {
 }
 
 int UpgradeSystem::CostForLevel(int level) {
-    switch (level) {
-        case 1:  return 30;
-        case 2:  return 60;
-        case 3:  return 120;
-        case 4:  return 240;
-        case 5:  return 480;
-        default: return 999;
-    }
+    return 30 * (1 << (level - 1));
 }

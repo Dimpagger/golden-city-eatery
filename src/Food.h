@@ -7,8 +7,10 @@ public:
     Food(FoodState initialState = FoodState::RAW);
 
     FoodState GetState() const;
-    void Advance();            // RAW → COOKED → SLICED → ASSEMBLED
-    bool IsAssembled() const;
+    RecipeType GetRecipe() const;
+    int GetReward() const;
+    const char* GetRecipeName() const;
+    void ProcessedAt(StationType station);
 
     bool IsHeld() const;
     void PickUp();
@@ -16,5 +18,6 @@ public:
 
 private:
     FoodState state;
+    RecipeType recipe = RecipeType::NONE;
     bool held = false;
 };

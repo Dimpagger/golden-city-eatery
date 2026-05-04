@@ -3,16 +3,17 @@
 #include "Constants.h"
 #include <cmath>
 
-Customer::Customer(float tx, float ty)
-    : x(SCREEN_WIDTH + 20.0f)   // start off-screen right
+Customer::Customer(float tx, float ty, CustomerType t, float p)
+    : x(SCREEN_WIDTH + 20.0f)
     , y(ty)
     , targetX(tx)
-    , targetY(ty) {}
+    , targetY(ty)
+    , type(t)
+    , patience(p) {}
 
 void Customer::Update(float dt) {
     switch (state) {
         case State::ENTERING: {
-            // Walk to queue position
             float dx = targetX - x;
             float dy = targetY - y;
             float dist = std::sqrt(dx * dx + dy * dy);
@@ -35,7 +36,6 @@ void Customer::Update(float dt) {
             break;
         }
         case State::LEAVING: {
-            // Walk off-screen right
             x += moveSpeed * dt;
             break;
         }
@@ -54,10 +54,20 @@ bool Customer::HasLeft() const {
 }
 
 bool Customer::IsWaiting() const { return state == State::WAITING; }
-
 bool Customer::WasServed() const { return served; }
 
 Customer::State Customer::GetState() const { return state; }
+CustomerType Customer::GetType() const { return type; }
+
+float Customer::GetRewardMultiplier() const {
+    switch (type) {
+        case CustomerType::NORMAL:   return REWARD_MULT_NORMAL;
+        case CustomerType::IMPATIENT: return REWARD_MULT_IMPATIENT;
+        case CustomerType::VIP:      return REWARD_MULT_VIP;
+    }
+    return REWARD_MULT_NORMAL;
+}
+
 float Customer::GetX() const { return x; }
 float Customer::GetY() const { return y; }
 float Customer::GetPatience() const { return patience; }
@@ -65,7 +75,6 @@ float Customer::GetPatience() const { return patience; }
 void Customer::MoveTo(float newX, float newY) {
     targetX = newX;
     targetY = newY;
-    // If already waiting, need to walk to new position
     if (state == State::WAITING) {
         state = State::ENTERING;
     }

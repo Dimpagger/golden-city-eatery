@@ -1,45 +1,46 @@
 #include <cstdlib>
 #include <cmath>
+#include <fstream>
 #include "Game.h"
 #include "Input.h"
 #include "Food.h"
 #include "Constants.h"
+#include "Localization.h"
 #include "UI.h"
 
+const std::string Game::HIGH_SCORE_FILE = "highscore.dat";
+
 Game::Game(): chef(CHEF_X_INIT, CHEF_Y) {
+    LoadHighScore();
     Reset();
 }
 
-Game::~Game() {
-    for (auto* c : customers) delete c;
-    customers.clear();  // clear pointers that are now dangling
+Game::~Game() = default;
+
+void Game::LoadHighScore() {
+    std::ifstream in(HIGH_SCORE_FILE);
+    if (in) {
+        in >> bestScore;
+        if (in.fail()) bestScore = 0;
+    }
+}
+
+void Game::SaveHighScore() {
+    if (score > bestScore) {
+        bestScore = score;
+        std::ofstream out(HIGH_SCORE_FILE);
+        if (out) out << bestScore;
+    }
+}
+
+float Game::GetDayMultiplier(int day) {
+    return 1.0f - (day - 1) * DAY_DIFFICULTY_STEP;
 }
 
 void Game::Reset() {
-    // Clean up old food from previous game
-    for (int i = 0; i < STATION_COUNT; i++) {
-        if (stations[i].HasFood()) delete stations[i].GetFood();
-    }
-    if (chef.IsHoldingFood()) delete chef.GetHeldFood();
-
-    // Chef
-    chef = Chef(CHEF_X_INIT, CHEF_Y);
-
-    // Stations
-    for (int i = 0; i < STATION_COUNT; i++) {
-        stations[i] = Station(static_cast<StationType>(i), STATION_X[i], STATION_Y);
-    }
-
-    stations[0].PlaceFood(new Food(FoodState::RAW));
-
-    // Customers
-    for (auto* c : customers) delete c;
-    customers.clear();
-
-    // Stats
     coins = 0;
     score = 0;
-    lostCustomers = 0;
+    streak = 0;
     paused = false;
 
     feedbackGrill = false;
@@ -47,12 +48,38 @@ void Game::Reset() {
     feedbackChef = false;
     feedbackTimer = 0.0f;
     gameOverTimer = 0.0f;
+    milestoneTimer = 0.0f;
+    milestoneStreak = 0;
+    lastLostCount = 0;
     floatTexts.clear();
     upgradeSys.Reset();
+
+    StartDay(1);
+}
+
+void Game::StartDay(int day) {
+    currentDay = day;
+    servedToday = 0;
+
+    chef = Chef(CHEF_X_INIT, CHEF_Y);
+    chef.PickUpFood(std::make_unique<Food>(FoodState::RAW));
+
+    for (int i = 0; i < STATION_COUNT; i++) {
+        stations[i] = Station(static_cast<StationType>(i), STATION_X[i], STATION_Y);
+    }
+
+    customerMgr.ResetForDay(GetDayMultiplier(day));
     ApplyUpgrades();
 
-    spawnTimer = 0.0f;
-    spawnInterval = SPAWN_INTERVAL_MIN + (rand() % (int)(SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN + 1));
+    lastLostCount = 0;
+    gameOverTimer = 0.0f;
+    milestoneTimer = 0.0f;
+    milestoneStreak = 0;
+    feedbackTimer = 0.0f;
+    feedbackGrill = false;
+    feedbackAssembly = false;
+    feedbackChef = false;
+    floatTexts.clear();
 }
 
 void Game::Update(float dt) {
@@ -62,14 +89,19 @@ void Game::Update(float dt) {
                 Reset();
                 state = GameState::PLAYING;
             }
+            if (Input::IsKeyPressed(KEY_L)) {
+                Loc::ToggleLanguage();
+            }
             break;
 
         case GameState::PLAYING:
             if (Input::IsKeyPressed(KEY_P)) {
                 paused = !paused;
             }
+            if (Input::IsKeyPressed(KEY_L)) {
+                Loc::ToggleLanguage();
+            }
             if (gameOverTimer > 0.0f) {
-                // Freeze game during flash, only count down
                 gameOverTimer -= dt;
                 if (gameOverTimer <= 0.0f) {
                     state = GameState::GAME_OVER;
@@ -77,9 +109,20 @@ void Game::Update(float dt) {
                 }
             } else if (!paused) {
                 UpdatePlaying(dt);
-                if (lostCustomers >= MAX_LOST) {
-                    gameOverTimer = 1.0f;   // start red flash transition
+                if (customerMgr.GetLostCount() >= MAX_LOST) {
+                    SaveHighScore();
+                    gameOverTimer = 1.0f;
+                } else if (servedToday >= DAY_TARGETS[currentDay - 1]) {
+                    SaveHighScore();
+                    state = (currentDay >= TOTAL_DAYS) ? GameState::VICTORY : GameState::DAY_COMPLETE;
                 }
+            }
+            break;
+
+        case GameState::DAY_COMPLETE:
+            if (Input::IsKeyPressed(KEY_INTERACT)) {
+                StartDay(currentDay + 1);
+                state = GameState::PLAYING;
             }
             break;
 
@@ -88,22 +131,36 @@ void Game::Update(float dt) {
                 Reset();
                 state = GameState::PLAYING;
             }
+            if (Input::IsKeyPressed(KEY_L)) {
+                Loc::ToggleLanguage();
+            }
+            break;
+
+        case GameState::VICTORY:
+            if (Input::IsKeyPressed(KEY_INTERACT)) {
+                Reset();
+                state = GameState::MENU;
+            }
             break;
     }
 }
 
 void Game::UpdatePlaying(float dt) {
-    // --- Chef ---
+    // --- Entities ---
     chef.Update(dt);
-
-    // --- Stations ---
     for (int i = 0; i < STATION_COUNT; i++) {
         stations[i].Update(dt);
+    }
+    customerMgr.Update(dt);
+
+    // --- Milestone timer ---
+    if (milestoneTimer > 0.0f) {
+        milestoneTimer -= dt;
     }
 
     // --- Float texts ---
     for (auto it = floatTexts.begin(); it != floatTexts.end(); ) {
-        it->y -= 40.0f * dt;   // float upward
+        it->y -= 40.0f * dt;
         it->timer -= dt;
         if (it->timer <= 0.0f)
             it = floatTexts.erase(it);
@@ -146,55 +203,34 @@ void Game::UpdatePlaying(float dt) {
 
     // --- Serving delivery ---
     if (stations[3].IsDone() && stations[3].HasFood()) {
-        delete stations[3].TakeFood();
-        coins += BASE_REWARD;
+        int baseReward = stations[3].GetFood()->GetReward();
+        stations[3].TakeFood();
+        float mult = customerMgr.ServeFirstWaiting();
+        int reward = (int)(baseReward * mult);
+        coins += reward;
         score++;
+        streak++;
+        servedToday++;
 
-        // Floating "+10" text
         floatTexts.push_back({stations[3].GetX() + stations[3].GetWidth() / 2.0f,
-                              stations[3].GetY(), 1.0f});
+                              stations[3].GetY(), 1.0f, reward});
 
-        for (auto* c : customers) {
-            if (c->IsWaiting()) {
-                c->Serve();
-                break;
-            }
+        if (streak > 0 && streak % MILESTONE_INTERVAL == 0) {
+            milestoneTimer = 2.0f;
+            milestoneStreak = streak;
         }
 
-        if (!stations[0].HasFood()) {
-            stations[0].PlaceFood(new Food(FoodState::RAW));
+        if (!chef.IsHoldingFood()) {
+            chef.PickUpFood(std::make_unique<Food>(FoodState::RAW));
         }
     }
 
-    // --- Customer spawn ---
-    spawnTimer += dt;
-    if (spawnTimer >= spawnInterval && (int)customers.size() < MAX_QUEUE) {
-        int slot = (int)customers.size();
-        customers.push_back(new Customer(QUEUE_X[slot], QUEUE_Y));
-        spawnTimer = 0.0f;
-        spawnInterval = SPAWN_INTERVAL_MIN + (rand() % (int)(SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN + 1));
+    // --- Streak reset on lost customer ---
+    int currentLost = customerMgr.GetLostCount();
+    if (currentLost > lastLostCount) {
+        streak = 0;
     }
-
-    // --- Update customers ---
-    for (auto* c : customers) {
-        c->Update(dt);
-    }
-
-    // --- Remove left customers ---
-    for (auto it = customers.begin(); it != customers.end(); ) {
-        if ((*it)->HasLeft()) {
-            if (!(*it)->WasServed()) {
-                lostCustomers++;
-            }
-            delete *it;
-            it = customers.erase(it);
-            for (int i = 0; i < (int)customers.size(); i++) {
-                customers[i]->MoveTo(QUEUE_X[i], QUEUE_Y);
-            }
-        } else {
-            ++it;
-        }
-    }
+    lastLostCount = currentLost;
 }
 
 Station* Game::GetNearbyStation() {
@@ -225,8 +261,14 @@ void Game::Draw() {
             DrawPlaying();
             if (paused) UI::DrawPauseOverlay();
             break;
+        case GameState::DAY_COMPLETE:
+            UI::DrawDayCompleteScreen(currentDay, score, coins);
+            break;
         case GameState::GAME_OVER:
-            UI::DrawGameOverScreen(score, coins, lostCustomers);
+            UI::DrawGameOverScreen(score, coins, customerMgr.GetLostCount(), bestScore, currentDay);
+            break;
+        case GameState::VICTORY:
+            UI::DrawVictoryScreen(score, coins, bestScore);
             break;
     }
 
@@ -234,17 +276,19 @@ void Game::Draw() {
 }
 
 void Game::DrawPlaying() {
-    const char* label[] = {"Grill", "Cutting", "Assembly", "Serving"};
-    const Color  color[] = {RED, GRAY, {210, 160, 0, 255}, GREEN};  // dark gold for Assembly
+    const char* label[] = {Loc::T("grill"), Loc::T("cutting"), Loc::T("assembly"), Loc::T("serving")};
+    const Color  color[] = {RED, GRAY, {210, 160, 0, 255}, GREEN};
 
-    UI::DrawTopBar(coins, score, (int)customers.size(), lostCustomers, MAX_LOST);
+    UI::DrawTopBar(coins, score, customerMgr.GetQueueCount(),
+                   customerMgr.GetLostCount(), MAX_LOST, bestScore, streak,
+                   currentDay, servedToday);
 
     for (int i = 0; i < STATION_COUNT; i++) {
         UI::DrawStation(stations[i], label[i], color[i], stations[i].GetWorkTime());
         UI::DrawCountdown(stations[i]);
     }
 
-    for (auto* c : customers) {
+    for (auto& c : customerMgr.GetCustomers()) {
         UI::DrawCustomer(*c);
     }
 
@@ -258,13 +302,17 @@ void Game::DrawPlaying() {
     UI::DrawUpgradePanel(upgradeSys, coins);
 
     for (auto& ft : floatTexts) {
-        UI::DrawFloatText(ft.x, ft.y, ft.timer);
+        UI::DrawFloatText(ft.x, ft.y, ft.timer, ft.value);
+    }
+
+    if (milestoneTimer > 0.0f) {
+        UI::DrawMilestone(milestoneStreak, milestoneTimer);
     }
 
     if (feedbackTimer > 0.0f) {
-        if (feedbackGrill)       UI::DrawFeedbackMessage("Grill Upgraded!");
-        if (feedbackAssembly)    UI::DrawFeedbackMessage("Assembly Upgraded!");
-        if (feedbackChef)        UI::DrawFeedbackMessage("Chef Speed Upgraded!");
+        if (feedbackGrill)       UI::DrawFeedbackMessage(Loc::T("grill_upgraded"));
+        if (feedbackAssembly)    UI::DrawFeedbackMessage(Loc::T("asm_upgraded"));
+        if (feedbackChef)        UI::DrawFeedbackMessage(Loc::T("chef_upgraded"));
     }
 
     if (gameOverTimer > 0.0f) {
@@ -307,4 +355,3 @@ void Game::HandleUpgradeInput() {
         }
     }
 }
-

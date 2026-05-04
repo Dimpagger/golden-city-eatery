@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "GameTypes.h"
 
 class Food;
@@ -22,9 +23,10 @@ public:
     bool HasFood() const;
     bool CanAccept(const Food& food) const;  // accepts the right state for this station
 
-    void PlaceFood(Food* food);
-    Food* TakeFood();
-    Food* GetFood() const;
+    void PlaceFood(std::unique_ptr<Food> food);
+    std::unique_ptr<Food> TakeFood();
+    Food* GetFood();
+    const Food* GetFood() const;
 
     void StartWork();
     void Update(float dt);   // advance progress while WORKING
@@ -37,5 +39,5 @@ private:
     float w = 100.0f, h = 80.0f;
     float progress = 0.0f;
     float workTime = 3.0f;   // base seconds to complete
-    Food* food = nullptr;
+    std::unique_ptr<Food> food;
 };

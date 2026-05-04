@@ -21,32 +21,32 @@ bool Station::HasFood() const { return food != nullptr; }
 
 bool Station::CanAccept(const Food& f) const {
     if (HasFood()) return false;
+    FoodState fs = f.GetState();
     switch (type) {
-        case StationType::GRILL:    return f.GetState() == FoodState::RAW;
-        case StationType::CUTTING:  return f.GetState() == FoodState::COOKED;
-        case StationType::ASSEMBLY: return f.GetState() == FoodState::SLICED;
-        case StationType::SERVING:  return f.GetState() == FoodState::ASSEMBLED;
+        case StationType::GRILL:    return fs == FoodState::RAW;
+        case StationType::CUTTING:  return fs == FoodState::RAW || fs == FoodState::COOKED;
+        case StationType::ASSEMBLY: return fs == FoodState::SLICED || fs == FoodState::COOKED;
+        case StationType::SERVING:  return fs == FoodState::ASSEMBLED;
     }
     return false;
 }
 
-void Station::PlaceFood(Food* f) {
-    food = f;
+void Station::PlaceFood(std::unique_ptr<Food> f) {
+    food = std::move(f);
     food->PutDown();
     state = StationState::IDLE;
     progress = 0.0f;
 }
 
-Food* Station::TakeFood() {
-    Food* f = food;
-    food = nullptr;
+std::unique_ptr<Food> Station::TakeFood() {
+    if (food) food->PickUp();
     state = StationState::IDLE;
     progress = 0.0f;
-    if (f) f->PickUp();
-    return f;
+    return std::move(food);
 }
 
-Food* Station::GetFood() const { return food; }
+Food* Station::GetFood() { return food.get(); }
+const Food* Station::GetFood() const { return food.get(); }
 
 void Station::StartWork() {
     if (HasFood() && state == StationState::IDLE) {
@@ -63,7 +63,7 @@ void Station::Update(float dt) {
         progress = 100.0f;
         state = StationState::DONE;
         if (food) {
-            food->Advance();
+            food->ProcessedAt(type);
         }
     }
 }

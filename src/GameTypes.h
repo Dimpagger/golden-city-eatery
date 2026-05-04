@@ -7,14 +7,10 @@ enum class StationState { IDLE, WORKING, DONE };
 // Station class → see Station.h
 // Food class → see Food.h
 enum class FoodState { RAW, COOKED, SLICED, ASSEMBLED };
+enum class RecipeType { NONE, ROUJIAMO, LIANGPI, KEBAB };
 
 // Customer class → see Customer.h
+enum class CustomerType { NORMAL, IMPATIENT, VIP };
 
 // --- Upgrade ---
 enum class UpgradeType { GRILL_SPEED, OVEN_SPEED, CHEF_SPEED };
-
-struct Upgrade {
-    UpgradeType type;
-    int level = 0;
-    int cost = 0;
-};
