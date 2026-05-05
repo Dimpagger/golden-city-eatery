@@ -3,12 +3,13 @@
 #include "Constants.h"
 #include <cmath>
 
-Customer::Customer(float tx, float ty, CustomerType t, float p)
+Customer::Customer(float tx, float ty, CustomerType t, float p, RecipeType d)
     : x(SCREEN_WIDTH + 20.0f)
     , y(ty)
     , targetX(tx)
     , targetY(ty)
     , type(t)
+    , desiredRecipe(d)
     , patience(p) {}
 
 void Customer::Update(float dt) {
@@ -71,6 +72,7 @@ float Customer::GetRewardMultiplier() const {
 float Customer::GetX() const { return x; }
 float Customer::GetY() const { return y; }
 float Customer::GetPatience() const { return patience; }
+RecipeType Customer::GetDesiredRecipe() const { return desiredRecipe; }
 
 void Customer::MoveTo(float newX, float newY) {
     targetX = newX;

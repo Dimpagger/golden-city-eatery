@@ -26,6 +26,14 @@ int main() {
 
     SetTargetFPS(60);
 
+    InitAudioDevice();
+    // TODO: Load sounds here when .wav files are available
+    // Sound sfxServe = LoadSound("assets/sfx/serve.wav");
+    // Sound sfxCook  = LoadSound("assets/sfx/cook.wav");
+    // Sound sfxLose  = LoadSound("assets/sfx/lose.wav");
+    // Sound sfxUpgrade = LoadSound("assets/sfx/upgrade.wav");
+    // Sound sfxMilestone = LoadSound("assets/sfx/milestone.wav");
+
     Font font;
     auto codepoints = Loc::GetRequiredCodepoints();
 
@@ -71,5 +79,6 @@ int main() {
     }
 
     if (font.texture.id != GetFontDefault().texture.id) UnloadFont(font);
+    CloseAudioDevice();
     return 0;
 }

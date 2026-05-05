@@ -1,8 +1,5 @@
 #include "Localization.h"
-#include <vector>
-#include <algorithm>
 #include <set>
-#include <string>
 #include <cstring>
 
 static Language currentLang = Language::CHINESE;
@@ -26,16 +23,21 @@ static const TranslationEntry kTranslations[] = {
     {"chef_upgraded",   "Chef Speed Upgraded!",    "厨师速度已升级!",     "移動速度 強化!"},
     {"coin_fmt",        "%dg",                     "%d 金币",            "%d コイン"},
     {"coins",           "Coins",                   "金币",               "コイン"},
-    {"controls_hint",   "A/D: Move  |  Space: Interact  |  1/2/3: Upgrade  |  P: Pause",
-                        "A/D: 移动  |  空格: 交互  |  1/2/3: 升级  |  P: 暂停  |  L: 语言",
-                        "A/D: 移動  |  SPACE: 作業  |  1/2/3: 強化  |  P: ポーズ  |  L: 言語"},
+    {"controls_hint",   "A/D: Move  |  Space: Interact  |  1-4: Upgrade  |  Tab: Recipes  |  P: Pause  |  L: Lang",
+                        "A/D: 移动  |  空格: 交互  |  1-4: 升级  |  Tab: 食谱  |  P: 暂停  |  L: 语言",
+                        "A/D: 移動  |  SPACE: 作業  |  1-4: 強化  |  Tab: レシピ  |  P: ポーズ  |  L: 言語"},
     {"cooked",          "Cooked",                  "已烤",               "焼上済"},
     {"ctrl_interact",   "Space  Interact with station","空格  与工位交互", "スペース  作業台を使う"},
     {"ctrl_move",       "A/D    Move left / right","A/D    左右移动",     "A/D    左右に移動"},
     {"ctrl_pause",      "P      Pause",            "P      暂停",         "P      ポーズ"},
     {"ctrl_upgrade",    "1/2/3  Buy upgrades",     "1/2/3  购买升级",     "1/2/3  強化を購入"},
+    {"cust_impatient",  "! Impatient  1.5x",       "! 急躁  1.5x",       "! せっかち  1.5x"},
+    {"cust_normal",     ":) Normal  1.0x",         ":) 普通  1.0x",      ":) 普通  1.0x"},
+    {"cust_vip",        "$ VIP  2.5x",             "$ VIP  2.5x",        "$ VIP  2.5x"},
     {"customers_lost",  "Customers Lost:",         "流失顾客:",           "ロスト数:"},
+    {"customers_title", "Customer Types:",         "顾客类型:",           "お客様タイプ:"},
     {"cutting",         "Cutting",                 "砧板",               "まな板"},
+    {"cutting_upgraded","Cutting Upgraded!",       "砧板已升级!",         "まな板 強化!"},
     {"day_complete",    "Complete!",               "完成!",              "クリア!"},
     {"day_info",        "D%d %d/%d",               "第%d天  %d/%d",      "%d日目  %d/%d"},
     {"day_label",       "Day %d",                  "第%d天",             "%d日目"},
@@ -44,6 +46,18 @@ static const TranslationEntry kTranslations[] = {
     {"game_over",       "GAME OVER",               "游戏结束",           "ゲームオーバー"},
     {"grill",           "Grill",                   "烤肉架",             "焼き台"},
     {"grill_upgraded",  "Grill Upgraded!",         "烤肉架已升级!",       "焼き台 強化!"},
+    {"help_close",      "Press H to close",         "按 H 关闭",          "Hで閉じる"},
+    {"help_customers",  "Customer Types",           "顾客类型",           "お客様タイプ"},
+    {"help_flow",       "Basic Flow",               "基本流程",           "基本の流れ"},
+    {"help_flow1",      "1. Take Raw meat to the right station", "1. 把生肉送到正确的工位", "1. 生肉を正しい作業台へ"},
+    {"help_flow2",      "2. Match the recipe each customer wants (RM/LP/KB)", "2. 匹配顾客想要的食谱 (RM/LP/KB)", "2. お客様の注文に合わせる (RM/LP/KB)"},
+    {"help_flow3",      "3. Serve at the rightmost counter", "3. 在最右侧出餐口完成服务", "3. 右端の提供口で提供"},
+    {"help_recipes",    "Recipes",                  "食谱",               "レシピ"},
+    {"help_tip1",       "5-in-a-row streak = bonus coins & milestone!", "连续5次服务 = 额外金币 + 里程碑!", "5連続提供 = ボーナスコイン!"},
+    {"help_tip2",       "Lose 3 customers = Game Over", "流失3个顾客 = 游戏结束", "3人ロスト = ゲームオーバー"},
+    {"help_tip3",       "Match recipe = full reward  |  Wrong = half coins", "食谱匹配 = 全额奖励  |  错误 = 半额", "注文一致 = 全额  |  不一致 = 半额"},
+    {"help_tips",       "Tips",                     "提示",               "ヒント"},
+    {"help_title",      "How to Play",              "游戏指南",           "遊び方"},
     {"how_to_play",     "How to Play:",            "操作说明:",           "遊び方:"},
     {"interact_hint",   "[Space]",                 "[空格]",             "[スペース]"},
     {"kebab",           "Kebab",                   "烤串",               "串焼き"},
@@ -51,6 +65,7 @@ static const TranslationEntry kTranslations[] = {
     {"lost",            "Lost",                    "流失",               "ロスト"},
     {"max_lvl",         "MAX",                     "满级",               "最大"},
     {"n_in_a_row",      "%d IN A ROW!",            "连续服务 %d 个!",     "%d連続!"},
+    {"new_recipe",      "New Recipe",              "新食谱解锁",         "新レシピ"},
     {"new_record",      "NEW RECORD!",             "新纪录!",             "新記録!"},
     {"paused",          "PAUSED",                  "暂停",               "ポーズ中"},
     {"press_again",     "Press SPACE to Play Again","按空格键重新开始",   "スペースでリトライ"},
@@ -60,6 +75,7 @@ static const TranslationEntry kTranslations[] = {
     {"press_start",     "Press SPACE to Start",    "按空格键开始",        "スペースでスタート"},
     {"raw",             "Raw",                     "生肉",               "生肉"},
     {"ready",           "READY",                   "就绪",               "準備可"},
+    {"recipes_title",   "Recipes",                 "食谱",               "レシピ"},
     {"roujiamo",        "Roujiamo",                "肉夹馍",             "肉夾馍"},
     {"score",           "Score",                   "分数",               "スコア"},
     {"served",          "Customers Served:",       "已服务顾客:",         "提供数:"},
@@ -73,36 +89,7 @@ static const TranslationEntry kTranslations[] = {
     {"victory",         "CONGRATULATIONS!",        "恭喜通关!",          "おめでとう!"},
 };
 
-// Per-language sorted vectors of (key, translation) pairs
-static std::vector<std::pair<const char*, const char*>> enEntries;
-static std::vector<std::pair<const char*, const char*>> zhEntries;
-static std::vector<std::pair<const char*, const char*>> jaEntries;
-static bool mapsBuilt = false;
-
-static void BuildMaps() {
-    if (mapsBuilt) return;
-    const int n = sizeof(kTranslations) / sizeof(kTranslations[0]);
-    enEntries.reserve(n);
-    zhEntries.reserve(n);
-    jaEntries.reserve(n);
-    for (int i = 0; i < n; i++) {
-        enEntries.emplace_back(kTranslations[i].key, kTranslations[i].en);
-        zhEntries.emplace_back(kTranslations[i].key, kTranslations[i].zh);
-        jaEntries.emplace_back(kTranslations[i].key, kTranslations[i].ja);
-    }
-    // Entries are already sorted in kTranslations, but sort to be safe
-    auto cmp = [](const std::pair<const char*, const char*>& a,
-                  const std::pair<const char*, const char*>& b) {
-        return std::strcmp(a.first, b.first) < 0;
-    };
-    std::sort(enEntries.begin(), enEntries.end(), cmp);
-    std::sort(zhEntries.begin(), zhEntries.end(), cmp);
-    std::sort(jaEntries.begin(), jaEntries.end(), cmp);
-    mapsBuilt = true;
-}
-
 void Loc::SetLanguage(Language lang) {
-    BuildMaps();
     currentLang = lang;
 }
 
@@ -119,17 +106,22 @@ void Loc::ToggleLanguage() {
 }
 
 const char* Loc::T(const char* key) {
-    BuildMaps();
-    const auto& vec = (currentLang == Language::CHINESE)  ? zhEntries
-                    : (currentLang == Language::JAPANESE) ? jaEntries
-                                                          : enEntries;
-    // Binary search — no std::string allocation
-    auto it = std::lower_bound(vec.begin(), vec.end(), key,
-        [](const std::pair<const char*, const char*>& p, const char* k) {
-            return std::strcmp(p.first, k) < 0;
-        });
-    if (it != vec.end() && std::strcmp(it->first, key) == 0)
-        return it->second;
+    // Direct binary search on the sorted kTranslations array — no heap allocations
+    const int n = sizeof(kTranslations) / sizeof(kTranslations[0]);
+    int lo = 0, hi = n - 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        int cmp = std::strcmp(kTranslations[mid].key, key);
+        if (cmp == 0) {
+            switch (currentLang) {
+                case Language::CHINESE:  return kTranslations[mid].zh;
+                case Language::JAPANESE: return kTranslations[mid].ja;
+                default:                 return kTranslations[mid].en;
+            }
+        }
+        if (cmp < 0) lo = mid + 1;
+        else hi = mid - 1;
+    }
     return key;
 }
 
@@ -148,7 +140,6 @@ static int DecodeUtf8(const char* s, int* cp) {
 }
 
 std::vector<int> Loc::GetRequiredCodepoints() {
-    BuildMaps();
     std::set<int> unique;
 
     // Always include ASCII

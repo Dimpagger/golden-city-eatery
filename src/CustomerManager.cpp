@@ -9,8 +9,9 @@ void CustomerManager::ResetForDay(float dayMult) {
     gameTime = 0.0f;
     spawnTimer = 0.0f;
     dayMultiplier = dayMult;
-    spawnInterval = SPAWN_INTERVAL_MIN * dayMult
-                  + (rand() % (int)(SPAWN_INTERVAL_MAX * dayMult - SPAWN_INTERVAL_MIN * dayMult + 1));
+    int range = (int)((SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN) * dayMult);
+    if (range < 0) range = 0;
+    spawnInterval = SPAWN_INTERVAL_MIN * dayMult + (rand() % (range + 1));
 }
 
 float CustomerManager::GetDifficulty() const {
@@ -46,12 +47,15 @@ void CustomerManager::Update(float dt) {
         float basePatience = (CUSTOMER_PATIENCE + (PATIENCE_MIN - CUSTOMER_PATIENCE) * diff) * dayMultiplier;
         CustomerType type = RollCustomerType();
         float patience = PatienceForType(type, basePatience);
-        customers.push_back(std::make_unique<Customer>(QUEUE_X[slot], QUEUE_Y, type, patience));
+        RecipeType desired = RollRecipeType();
+        customers.push_back(std::make_unique<Customer>(QUEUE_X[slot], QUEUE_Y, type, patience, desired));
         spawnTimer = 0.0f;
 
         float minInterval = (SPAWN_INTERVAL_MIN + (SPAWN_INTERVAL_MIN_FAST - SPAWN_INTERVAL_MIN) * diff) * dayMultiplier;
         float maxInterval = (SPAWN_INTERVAL_MAX + (SPAWN_INTERVAL_MAX_FAST - SPAWN_INTERVAL_MAX) * diff) * dayMultiplier;
-        spawnInterval = minInterval + (rand() % (int)(maxInterval - minInterval + 1));
+        int sRange = (int)(maxInterval - minInterval);
+        if (sRange < 0) sRange = 0;
+        spawnInterval = minInterval + (rand() % (sRange + 1));
     }
 
     // Update
@@ -64,6 +68,8 @@ void CustomerManager::Update(float dt) {
         if ((*it)->HasLeft()) {
             if (!(*it)->WasServed()) {
                 lostCustomers++;
+                lastLostX = (*it)->GetX();
+                lastLostY = (*it)->GetY();
             }
             it = customers.erase(it);
             for (int i = 0; i < (int)customers.size(); i++) {
@@ -73,6 +79,20 @@ void CustomerManager::Update(float dt) {
             ++it;
         }
     }
+}
+
+const Customer* CustomerManager::GetFirstWaiting() const {
+    for (auto& c : customers) {
+        if (c->IsWaiting()) return c.get();
+    }
+    return nullptr;
+}
+
+RecipeType CustomerManager::RollRecipeType() const {
+    int roll = rand() % 3;
+    if (roll == 0) return RecipeType::ROUJIAMO;
+    if (roll == 1) return RecipeType::LIANGPI;
+    return RecipeType::KEBAB;
 }
 
 float CustomerManager::ServeFirstWaiting() {
@@ -97,3 +117,6 @@ int CustomerManager::GetQueueCount() const {
 int CustomerManager::GetLostCount() const {
     return lostCustomers;
 }
+
+float CustomerManager::GetLastLostX() const { return lastLostX; }
+float CustomerManager::GetLastLostY() const { return lastLostY; }

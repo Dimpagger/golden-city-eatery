@@ -12,9 +12,11 @@ public:
 
     // ── Full Screens ──────────────────────────────────
     static void DrawMenuScreen();
-    static void DrawGameOverScreen(int score, int coins, int lost, int bestScore, int day);
+    static void DrawGameOverScreen(int score, int coins, int lost, int bestScore, int day,
+                                   int rjm, int lp, int kb);
     static void DrawDayCompleteScreen(int day, int score, int coins);
-    static void DrawVictoryScreen(int score, int coins, int bestScore);
+    static void DrawVictoryScreen(int score, int coins, int bestScore,
+                                  int rjm, int lp, int kb);
     static void DrawPauseOverlay();
 
     // ── HUD ───────────────────────────────────────────
@@ -39,6 +41,9 @@ public:
     static void DrawFloatText(float x, float y, float alpha, int value);
     static void DrawMilestone(int streak, float timer);
     static void DrawGameOverFlash(float alpha);
+    static void DrawRecipePanel();
+    static void DrawHelpPanel();
+    static void DrawDiscoveryMessage(RecipeType recipe, float timer);
 
 private:
     // ── Helpers ───────────────────────────────────────
@@ -46,6 +51,8 @@ private:
     static int TextWidth(const char* text, int size);
     static const char* FoodStateLabel(FoodState state);
     static const char* CustomerFace(const Customer& c);
+    static void DrawUpgradeRow(int ux, int uy, int uw, const char* detailText,
+                               const UpgradeSystem& upg, UpgradeType type, int coins);
 
     static Font s_font;
 };

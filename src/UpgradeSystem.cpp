@@ -4,18 +4,20 @@ UpgradeSystem::UpgradeSystem() = default;
 
 int UpgradeSystem::GetLevel(UpgradeType type) const {
     switch (type) {
-        case UpgradeType::GRILL_SPEED: return grillLevel;
-        case UpgradeType::OVEN_SPEED:  return ovenLevel;
-        case UpgradeType::CHEF_SPEED:  return chefSpeedLevel;
+        case UpgradeType::GRILL_SPEED:   return grillLevel;
+        case UpgradeType::CUTTING_SPEED: return cuttingLevel;
+        case UpgradeType::OVEN_SPEED:    return ovenLevel;
+        case UpgradeType::CHEF_SPEED:    return chefSpeedLevel;
     }
     return 0;
 }
 
 int UpgradeSystem::GetCost(UpgradeType type) const {
     switch (type) {
-        case UpgradeType::GRILL_SPEED: return CostForLevel(grillLevel + 1);
-        case UpgradeType::OVEN_SPEED:  return CostForLevel(ovenLevel + 1);
-        case UpgradeType::CHEF_SPEED:  return CostForLevel(chefSpeedLevel + 1);
+        case UpgradeType::GRILL_SPEED:   return CostForLevel(grillLevel + 1);
+        case UpgradeType::CUTTING_SPEED: return CostForLevel(cuttingLevel + 1);
+        case UpgradeType::OVEN_SPEED:    return CostForLevel(ovenLevel + 1);
+        case UpgradeType::CHEF_SPEED:    return CostForLevel(chefSpeedLevel + 1);
     }
     return 0;
 }
@@ -36,9 +38,10 @@ bool UpgradeSystem::Purchase(UpgradeType type, int& coins) {
     coins -= cost;
 
     switch (type) {
-        case UpgradeType::GRILL_SPEED: grillLevel++;     break;
-        case UpgradeType::OVEN_SPEED:  ovenLevel++;      break;
-        case UpgradeType::CHEF_SPEED:  chefSpeedLevel++; break;
+        case UpgradeType::GRILL_SPEED:   grillLevel++;     break;
+        case UpgradeType::CUTTING_SPEED: cuttingLevel++;   break;
+        case UpgradeType::OVEN_SPEED:    ovenLevel++;      break;
+        case UpgradeType::CHEF_SPEED:    chefSpeedLevel++; break;
     }
     return true;
 }
@@ -46,8 +49,8 @@ bool UpgradeSystem::Purchase(UpgradeType type, int& coins) {
 float UpgradeSystem::GetSpeedMultiplier(UpgradeType type) const {
     int level = GetLevel(type);
     if (type == UpgradeType::CHEF_SPEED) {
-        // +20% speed per level: 1.0 → 1.8
-        return 1.0f + 0.2f * level;
+        // +50% speed per level: 1.0 → 3.0
+        return 1.0f + 0.5f * level;
     } else {
         // -20% time per level: 1.0 → 0.2 (level 4)
         return 1.0f - 0.2f * level;
@@ -56,6 +59,7 @@ float UpgradeSystem::GetSpeedMultiplier(UpgradeType type) const {
 
 void UpgradeSystem::Reset() {
     grillLevel = 0;
+    cuttingLevel = 0;
     ovenLevel = 0;
     chefSpeedLevel = 0;
 }

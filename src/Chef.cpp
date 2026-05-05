@@ -8,9 +8,11 @@ Chef::Chef(float startX, float startY) : x(startX), y(startY) {}
 void Chef::Update(float dt) {
     if (Input::IsKeyDown(KEY_MOVE_LEFT)) {
         x -= speed * dt;
+        facingRight = false;
     }
     if (Input::IsKeyDown(KEY_MOVE_RIGHT)) {
         x += speed * dt;
+        facingRight = true;
     }
 
     if (x < 0) x = 0;
@@ -37,3 +39,10 @@ std::unique_ptr<Food> Chef::DropFood() {
 
 void Chef::SetSpeed(float s) { speed = s; }
 float Chef::GetSpeed() const { return speed; }
+
+void Chef::ResetPosition(float newX, float newY) {
+    x = newX;
+    y = newY;
+    heldFood.reset();
+    speed = BASE_CHEF_SPEED;
+}

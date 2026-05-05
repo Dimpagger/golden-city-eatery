@@ -76,31 +76,36 @@ void UI::DrawMenuScreen() {
     DrawTextEx(s_font, Loc::T("press_start"), {270, 415}, UI_FONT_BODY, 1.0f, DARKGREEN);
 }
 
-void UI::DrawGameOverScreen(int score, int coins, int lost, int bestScore, int day) {
+void UI::DrawGameOverScreen(int score, int coins, int lost, int bestScore, int day,
+                              int rjm, int lp, int kb) {
     DrawPanel(UI_GAMEOVER_PANEL_X, UI_GAMEOVER_PANEL_Y,
               UI_GAMEOVER_PANEL_W, UI_GAMEOVER_PANEL_H, COLOR_PANEL_BG);
 
-    DrawTextEx(s_font, Loc::T("game_over"), {280, 140}, UI_FONT_TITLE, 1.0f, RED);
+    DrawTextEx(s_font, Loc::T("game_over"), {280, 130}, UI_FONT_TITLE, 1.0f, RED);
 
     DrawTextEx(s_font, TextFormat(Loc::T("day_label"), day),
-               {340, 185}, UI_FONT_BODY, 1.0f, DARKGRAY);
+               {340, 175}, UI_FONT_BODY, 1.0f, DARKGRAY);
 
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("served"), score),
-               {250, 220}, UI_FONT_BODY, 1.0f, DARKGREEN);
+               {250, 210}, UI_FONT_BODY, 1.0f, DARKGREEN);
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("customers_lost"), lost),
-               {250, 250}, UI_FONT_BODY, 1.0f, RED);
+               {250, 235}, UI_FONT_BODY, 1.0f, RED);
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("total_coins"), coins),
-               {250, 290}, UI_FONT_BODY, 1.0f, COLOR_GOLD);
+               {250, 260}, UI_FONT_BODY, 1.0f, COLOR_GOLD);
 
-    Color bestColor = (score >= bestScore && bestScore > 0) ? COLOR_GOLD : DARKGRAY;
+    Color bestColor = (score > 0 && score >= bestScore) ? COLOR_GOLD : DARKGRAY;
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("best_score"), bestScore),
-               {250, 330}, UI_FONT_BODY, 1.0f, bestColor);
+               {250, 290}, UI_FONT_BODY, 1.0f, bestColor);
 
-    if (score >= bestScore && bestScore > 0) {
-        DrawTextEx(s_font, Loc::T("new_record"), {310, 370}, UI_FONT_BODY, 1.0f, ORANGE);
+    if (score > 0 && score >= bestScore) {
+        DrawTextEx(s_font, Loc::T("new_record"), {310, 315}, UI_FONT_BODY, 1.0f, ORANGE);
     }
 
-    DrawTextEx(s_font, Loc::T("press_again"), {240, 410}, UI_FONT_BODY, 1.0f, DARKGREEN);
+    // Stats
+    DrawTextEx(s_font, TextFormat("RM:%d  LP:%d  KB:%d", rjm, lp, kb),
+               {250, 355}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+
+    DrawTextEx(s_font, Loc::T("press_again"), {240, 395}, UI_FONT_BODY, 1.0f, DARKGREEN);
 }
 
 void UI::DrawDayCompleteScreen(int day, int score, int coins) {
@@ -117,25 +122,34 @@ void UI::DrawDayCompleteScreen(int day, int score, int coins) {
     DrawTextEx(s_font, Loc::T("press_continue"), {250, 350}, UI_FONT_BODY, 1.0f, DARKGREEN);
 }
 
-void UI::DrawVictoryScreen(int score, int coins, int bestScore) {
+void UI::DrawVictoryScreen(int score, int coins, int bestScore,
+                             int rjm, int lp, int kb) {
     DrawPanel(UI_VICTORY_PANEL_X, UI_VICTORY_PANEL_Y,
               UI_VICTORY_PANEL_W, UI_VICTORY_PANEL_H, COLOR_PANEL_BG);
 
-    DrawTextEx(s_font, Loc::T("victory"), {260, 170}, UI_FONT_TITLE, 1.0f, ORANGE);
+    DrawTextEx(s_font, Loc::T("victory"), {260, 160}, UI_FONT_TITLE, 1.0f, ORANGE);
 
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("served"), score),
-               {250, 230}, UI_FONT_BODY, 1.0f, DARKGREEN);
+               {250, 215}, UI_FONT_BODY, 1.0f, DARKGREEN);
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("total_coins"), coins),
-               {250, 260}, UI_FONT_BODY, 1.0f, COLOR_GOLD);
+               {250, 240}, UI_FONT_BODY, 1.0f, COLOR_GOLD);
 
-    Color bestColor = (score >= bestScore && bestScore > 0) ? COLOR_GOLD : DARKGRAY;
+    Color bestColor = (score > 0 && score >= bestScore) ? COLOR_GOLD : DARKGRAY;
     DrawTextEx(s_font, TextFormat("%s %d", Loc::T("best_score"), bestScore),
-               {250, 300}, UI_FONT_BODY, 1.0f, bestColor);
-    if (score >= bestScore && bestScore > 0) {
-        DrawTextEx(s_font, Loc::T("new_record"), {370, 300}, UI_FONT_BODY, 1.0f, ORANGE);
+               {250, 270}, UI_FONT_BODY, 1.0f, bestColor);
+    if (score > 0 && score >= bestScore) {
+        DrawTextEx(s_font, Loc::T("new_record"), {370, 270}, UI_FONT_BODY, 1.0f, ORANGE);
     }
 
-    DrawTextEx(s_font, Loc::T("press_menu"), {220, 400}, UI_FONT_BODY, 1.0f, DARKGREEN);
+    // Stats
+    DrawTextEx(s_font, TextFormat("RM:%d  LP:%d  KB:%d", rjm, lp, kb),
+               {250, 305}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+
+    DrawTextEx(s_font, Loc::T("press_continue"),
+               {220, 390}, UI_FONT_BODY, 1.0f, DARKGREEN);
+    DrawTextEx(s_font, Loc::T("press_menu"),
+               {(float)(SCREEN_WIDTH/2 - TextWidth(Loc::T("press_menu"), UI_FONT_SMALL)/2),
+                415}, UI_FONT_SMALL, 1.0f, GRAY);
 }
 
 void UI::DrawPauseOverlay() {
@@ -190,15 +204,28 @@ void UI::DrawStation(const Station& s, const char* label,
     DrawTextEx(s_font, label, {(float)(sx + (sw - labelW) / 2), (float)(sy + 6)},
                UI_FONT_SMALL, 1.0f, WHITE);
 
+    // Food indicator — colored dot when station has food
+    if (s.HasFood()) {
+        const Food* f = s.GetFood();
+        Color foodCol = DARKGRAY;
+        if (f) {
+            switch (f->GetState()) {
+                case FoodState::RAW:       foodCol = {220, 80, 80, 255}; break;
+                case FoodState::COOKED:    foodCol = {160, 100, 40, 255}; break;
+                case FoodState::SLICED:    foodCol = {180, 160, 100, 255}; break;
+                case FoodState::ASSEMBLED: foodCol = {100, 180, 80, 255}; break;
+            }
+        }
+        DrawCircle(sx + sw / 2, sy + sh / 2 + 4, 6, foodCol);
+        DrawCircleLines(sx + sw / 2, sy + sh / 2 + 4, 6, DARKGRAY);
+    }
+
     DrawTextEx(s_font, TextFormat("%.1fs", workTime),
                {(float)(sx + 6), (float)(sy + sh - 18)}, UI_FONT_TINY, 1.0f, BLACK);
 
     if (s.IsDone() && s.HasFood()) {
         DrawTextEx(s_font, Loc::T("done"),
                    {(float)(sx + sw - 40), (float)(sy + sh - 18)}, UI_FONT_TINY, 1.0f, DARKGREEN);
-    } else if (s.HasFood() && s.GetState() == StationState::IDLE) {
-        DrawTextEx(s_font, Loc::T("ready"),
-                   {(float)(sx + sw - 45), (float)(sy + sh - 18)}, UI_FONT_TINY, 1.0f, DARKGRAY);
     }
 
     if (s.GetState() == StationState::WORKING) {
@@ -230,6 +257,7 @@ void UI::DrawCustomer(const Customer& c) {
     DrawRectangleLines(cx, cy, 28, 40, DARKGRAY);
 
     if (c.IsWaiting()) {
+        // Type indicator
         const char* typeLabel = "";
         switch (c.GetType()) {
             case CustomerType::IMPATIENT: typeLabel = "!"; break;
@@ -240,6 +268,16 @@ void UI::DrawCustomer(const Customer& c) {
             DrawTextEx(s_font, typeLabel,
                        {(float)(cx + 10), (float)(cy - 18)}, UI_FONT_SMALL, 1.0f, BLACK);
         }
+        // Desired recipe
+        const char* recipeLabel = "";
+        switch (c.GetDesiredRecipe()) {
+            case RecipeType::ROUJIAMO: recipeLabel = "RM"; break;
+            case RecipeType::LIANGPI:  recipeLabel = "LP"; break;
+            case RecipeType::KEBAB:    recipeLabel = "KB"; break;
+            default: break;
+        }
+        DrawTextEx(s_font, recipeLabel,
+                   {(float)(cx + 2), (float)(cy - 16)}, UI_FONT_TINY, 1.0f, DARKGRAY);
     }
 
     const char* face = CustomerFace(c);
@@ -256,8 +294,13 @@ void UI::DrawCustomer(const Customer& c) {
 }
 
 void UI::DrawChef(const Chef& chef) {
-    DrawRectangle((int)chef.GetX(), (int)chef.GetY(),
-                  (int)chef.GetWidth(), (int)chef.GetHeight(), BLUE);
+    int cx = (int)chef.GetX(), cy = (int)chef.GetY();
+    int cw = (int)chef.GetWidth(), ch = (int)chef.GetHeight();
+    DrawRectangle(cx, cy, cw, ch, BLUE);
+    // Facing direction indicator
+    int eyeX = chef.IsFacingRight() ? cx + cw - 8 : cx + 8;
+    DrawRectangle(eyeX, cy + 6, 4, 4, WHITE);
+    DrawRectangle(eyeX, cy + 16, 4, 4, WHITE);
 
     if (chef.IsHoldingFood()) {
         const char* stateStr = FoodStateLabel(chef.GetHeldFood()->GetState());
@@ -294,6 +337,24 @@ void UI::DrawCountdown(const Station& s) {
 
 // ── Panels ────────────────────────────────────────────
 
+void UI::DrawUpgradeRow(int ux, int uy, int uw, const char* detailText,
+                        const UpgradeSystem& upg, UpgradeType type, int coins) {
+    const int costPad = 4;
+    DrawTextEx(s_font, detailText, {(float)ux, (float)uy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    if (!upg.IsMaxed(type)) {
+        const char* costText = TextFormat(Loc::T("coin_fmt"), upg.GetCost(type));
+        Color costColor = coins >= upg.GetCost(type) ? DARKGREEN : RED;
+        DrawTextEx(s_font, costText,
+                   {(float)(ux + uw - TextWidth(costText, UI_FONT_SMALL) - costPad - UI_PANEL_PAD),
+                    (float)uy}, UI_FONT_SMALL, 1.0f, costColor);
+    } else {
+        int w = TextWidth(Loc::T("max_lvl"), UI_FONT_SMALL);
+        DrawTextEx(s_font, Loc::T("max_lvl"),
+                   {(float)(ux + uw - w - costPad - UI_PANEL_PAD), (float)uy},
+                   UI_FONT_SMALL, 1.0f, GRAY);
+    }
+}
+
 void UI::DrawUpgradePanel(const UpgradeSystem& upg, int coins) {
     DrawPanel(UI_UPGRADE_PANEL_X, UI_UPGRADE_PANEL_Y,
               UI_UPGRADE_PANEL_W, UI_UPGRADE_PANEL_H, COLOR_PANEL_BG);
@@ -301,79 +362,157 @@ void UI::DrawUpgradePanel(const UpgradeSystem& upg, int coins) {
     int ux = (int)UI_UPGRADE_PANEL_X;
     int uy = (int)UI_UPGRADE_PANEL_Y;
     int uw = (int)UI_UPGRADE_PANEL_W;
-    const int costPad = 4;  // right-edge padding for cost text
 
-    DrawTextEx(s_font, TextFormat("%s (1/2/3)", Loc::T("upgrades_title")),
+    DrawTextEx(s_font, TextFormat("%s (1-4)", Loc::T("upgrades_title")),
                {(float)ux, (float)uy}, UI_FONT_TINY, 1.0f, DARKGRAY);
-    uy += 16;
+    uy += 14;
 
     // [1] Grill speed
     {
         float gt = BASE_GRILL_TIME * upg.GetSpeedMultiplier(UpgradeType::GRILL_SPEED);
-        DrawTextEx(s_font, TextFormat("[1] %s  Lv.%d  %.1fs",
-                   Loc::T("grill"), upg.GetLevel(UpgradeType::GRILL_SPEED), gt),
-                   {(float)ux, (float)uy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
-        if (!upg.IsMaxed(UpgradeType::GRILL_SPEED)) {
-            const char* costText = TextFormat(Loc::T("coin_fmt"), upg.GetCost(UpgradeType::GRILL_SPEED));
-            Color costColor = coins >= upg.GetCost(UpgradeType::GRILL_SPEED) ? DARKGREEN : RED;
-            DrawTextEx(s_font, costText,
-                       {(float)(ux + uw - TextWidth(costText, UI_FONT_SMALL) - costPad - UI_PANEL_PAD),
-                        (float)uy}, UI_FONT_SMALL, 1.0f, costColor);
-        } else {
-            int w = TextWidth(Loc::T("max_lvl"), UI_FONT_SMALL);
-            DrawTextEx(s_font, Loc::T("max_lvl"),
-                       {(float)(ux + uw - w - costPad - UI_PANEL_PAD), (float)uy},
-                       UI_FONT_SMALL, 1.0f, GRAY);
-        }
+        DrawUpgradeRow(ux, uy, uw,
+            TextFormat("[1] %s  Lv.%d  %.1fs", Loc::T("grill"), upg.GetLevel(UpgradeType::GRILL_SPEED), gt),
+            upg, UpgradeType::GRILL_SPEED, coins);
     }
-    uy += 18;
+    uy += 16;
 
-    // [2] Assembly speed
+    // [2] Cutting speed
+    {
+        float ct = BASE_CUTTING_TIME * upg.GetSpeedMultiplier(UpgradeType::CUTTING_SPEED);
+        DrawUpgradeRow(ux, uy, uw,
+            TextFormat("[2] %s  Lv.%d  %.1fs", Loc::T("cutting"), upg.GetLevel(UpgradeType::CUTTING_SPEED), ct),
+            upg, UpgradeType::CUTTING_SPEED, coins);
+    }
+    uy += 16;
+
+    // [3] Assembly speed
     {
         float at = BASE_ASSEMBLY_TIME * upg.GetSpeedMultiplier(UpgradeType::OVEN_SPEED);
-        DrawTextEx(s_font, TextFormat("[2] %s  Lv.%d  %.1fs",
-                   Loc::T("assembly"), upg.GetLevel(UpgradeType::OVEN_SPEED), at),
-                   {(float)ux, (float)uy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
-        if (!upg.IsMaxed(UpgradeType::OVEN_SPEED)) {
-            const char* costText = TextFormat(Loc::T("coin_fmt"), upg.GetCost(UpgradeType::OVEN_SPEED));
-            Color costColor = coins >= upg.GetCost(UpgradeType::OVEN_SPEED) ? DARKGREEN : RED;
-            DrawTextEx(s_font, costText,
-                       {(float)(ux + uw - TextWidth(costText, UI_FONT_SMALL) - costPad - UI_PANEL_PAD),
-                        (float)uy}, UI_FONT_SMALL, 1.0f, costColor);
-        } else {
-            int w = TextWidth(Loc::T("max_lvl"), UI_FONT_SMALL);
-            DrawTextEx(s_font, Loc::T("max_lvl"),
-                       {(float)(ux + uw - w - costPad - UI_PANEL_PAD), (float)uy},
-                       UI_FONT_SMALL, 1.0f, GRAY);
-        }
+        DrawUpgradeRow(ux, uy, uw,
+            TextFormat("[3] %s  Lv.%d  %.1fs", Loc::T("assembly"), upg.GetLevel(UpgradeType::OVEN_SPEED), at),
+            upg, UpgradeType::OVEN_SPEED, coins);
     }
-    uy += 18;
+    uy += 16;
 
-    // [3] Chef speed
+    // [4] Chef speed
     {
         float cs = BASE_CHEF_SPEED * upg.GetSpeedMultiplier(UpgradeType::CHEF_SPEED);
-        DrawTextEx(s_font, TextFormat("[3] %s  Lv.%d  %.0fpx/s",
-                   Loc::T("chef_speed"), upg.GetLevel(UpgradeType::CHEF_SPEED), cs),
-                   {(float)ux, (float)uy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
-        if (!upg.IsMaxed(UpgradeType::CHEF_SPEED)) {
-            const char* costText = TextFormat(Loc::T("coin_fmt"), upg.GetCost(UpgradeType::CHEF_SPEED));
-            Color costColor = coins >= upg.GetCost(UpgradeType::CHEF_SPEED) ? DARKGREEN : RED;
-            DrawTextEx(s_font, costText,
-                       {(float)(ux + uw - TextWidth(costText, UI_FONT_SMALL) - costPad - UI_PANEL_PAD),
-                        (float)uy}, UI_FONT_SMALL, 1.0f, costColor);
-        } else {
-            int w = TextWidth(Loc::T("max_lvl"), UI_FONT_SMALL);
-            DrawTextEx(s_font, Loc::T("max_lvl"),
-                       {(float)(ux + uw - w - costPad - UI_PANEL_PAD), (float)uy},
-                       UI_FONT_SMALL, 1.0f, GRAY);
-        }
+        DrawUpgradeRow(ux, uy, uw,
+            TextFormat("[4] %s  Lv.%d  %.0fpx/s", Loc::T("chef_speed"), upg.GetLevel(UpgradeType::CHEF_SPEED), cs),
+            upg, UpgradeType::CHEF_SPEED, coins);
     }
+}
+
+void UI::DrawDiscoveryMessage(RecipeType recipe, float timer) {
+    const char* name = "";
+    switch (recipe) {
+        case RecipeType::LIANGPI: name = Loc::T("liangpi"); break;
+        case RecipeType::KEBAB:   name = Loc::T("kebab");   break;
+        default: break;
+    }
+    const char* text = TextFormat("%s: %s!", Loc::T("new_recipe"), name);
+    int w = TextWidth(text, UI_FONT_HEAD);
+    float alpha = timer / 2.0f;
+    Color c = ORANGE;
+    c.a = (unsigned char)(255 * alpha);
+    DrawTextEx(s_font, text,
+               {(float)((SCREEN_WIDTH - w) / 2), 130}, UI_FONT_HEAD, 1.0f, c);
 }
 
 void UI::DrawFeedbackMessage(const char* text) {
     int w = TextWidth(text, UI_FONT_HEAD);
     DrawTextEx(s_font, text,
                {(float)((SCREEN_WIDTH - w) / 2), 90}, UI_FONT_HEAD, 1.0f, ORANGE);
+}
+
+void UI::DrawRecipePanel() {
+    DrawPanel(10, 380, 310, 210, COLOR_PANEL_BG);
+    int rx = 16, ry = 386;
+    DrawTextEx(s_font, Loc::T("recipes_title"), {(float)rx, (float)ry}, UI_FONT_BODY, 1.0f, DARKGRAY);
+    ry += 24;
+
+    // Recipe paths with coin values
+    DrawTextEx(s_font, TextFormat("%s %dg: Raw -> Grill -> Cutting -> Assembly",
+               Loc::T("roujiamo"), REWARD_ROUJIAMO),
+               {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, DARKGREEN);
+    ry += 18;
+    DrawTextEx(s_font, TextFormat("%s %dg: Raw -> Cutting -> Assembly",
+               Loc::T("liangpi"), REWARD_LIANGPI),
+               {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    ry += 18;
+    DrawTextEx(s_font, TextFormat("%s %dg: Raw -> Grill -> Assembly",
+               Loc::T("kebab"), REWARD_KEBAB),
+               {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    ry += 26;
+    DrawTextEx(s_font, Loc::T("customers_title"), {(float)rx, (float)ry}, UI_FONT_BODY, 1.0f, DARKGRAY);
+    ry += 22;
+    DrawTextEx(s_font, Loc::T("cust_normal"), {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, GREEN);
+    ry += 16;
+    DrawTextEx(s_font, Loc::T("cust_impatient"), {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, YELLOW);
+    ry += 16;
+    DrawTextEx(s_font, Loc::T("cust_vip"), {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, COLOR_GOLD);
+    ry += 18;
+    DrawTextEx(s_font, TextFormat("%s=RM  %s=LP  %s=KB",
+               Loc::T("roujiamo"), Loc::T("liangpi"), Loc::T("kebab")),
+               {(float)rx, (float)ry}, UI_FONT_TINY, 1.0f, DARKGRAY);
+}
+
+void UI::DrawHelpPanel() {
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, {0, 0, 0, 180});
+    DrawPanel(50, 30, 700, 540, COLOR_PANEL_BG);
+
+    int hx = 64, hy = 44;
+    DrawTextEx(s_font, Loc::T("help_title"), {(float)hx, (float)hy}, UI_FONT_TITLE, 1.0f, DARKGREEN);
+    hy += 46;
+
+    // --- Basic Flow ---
+    DrawTextEx(s_font, Loc::T("help_flow"), {(float)hx, (float)hy}, UI_FONT_HEAD, 1.0f, DARKGRAY);
+    hy += 28;
+    DrawTextEx(s_font, Loc::T("help_flow1"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    hy += 20;
+    DrawTextEx(s_font, Loc::T("help_flow2"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    hy += 20;
+    DrawTextEx(s_font, Loc::T("help_flow3"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    hy += 30;
+
+    // --- Recipes ---
+    DrawTextEx(s_font, Loc::T("help_recipes"), {(float)hx, (float)hy}, UI_FONT_HEAD, 1.0f, DARKGRAY);
+    hy += 28;
+    DrawTextEx(s_font, TextFormat("RM %s  %dg: Raw -> Grill -> Cutting -> Assembly",
+               Loc::T("roujiamo"), REWARD_ROUJIAMO),
+               {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGREEN);
+    hy += 20;
+    DrawTextEx(s_font, TextFormat("LP %s  %dg: Raw -> Cutting -> Assembly",
+               Loc::T("liangpi"), REWARD_LIANGPI),
+               {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    hy += 20;
+    DrawTextEx(s_font, TextFormat("KB %s  %dg: Raw -> Grill -> Assembly",
+               Loc::T("kebab"), REWARD_KEBAB),
+               {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    hy += 30;
+
+    // --- Customers ---
+    DrawTextEx(s_font, Loc::T("help_customers"), {(float)hx, (float)hy}, UI_FONT_HEAD, 1.0f, DARKGRAY);
+    hy += 28;
+    DrawTextEx(s_font, Loc::T("cust_normal"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, GREEN);
+    hy += 20;
+    DrawTextEx(s_font, Loc::T("cust_impatient"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, YELLOW);
+    hy += 20;
+    DrawTextEx(s_font, Loc::T("cust_vip"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, COLOR_GOLD);
+    hy += 30;
+
+    // --- Tips ---
+    DrawTextEx(s_font, Loc::T("help_tips"), {(float)hx, (float)hy}, UI_FONT_HEAD, 1.0f, DARKGRAY);
+    hy += 28;
+    DrawTextEx(s_font, Loc::T("help_tip1"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    hy += 20;
+    DrawTextEx(s_font, Loc::T("help_tip2"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, RED);
+    hy += 20;
+    DrawTextEx(s_font, Loc::T("help_tip3"), {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+
+    // Close hint
+    DrawTextEx(s_font, Loc::T("help_close"),
+               {(float)(hx + 700 - TextWidth(Loc::T("help_close"), UI_FONT_BODY)), 540}, UI_FONT_BODY, 1.0f, DARKGREEN);
 }
 
 void UI::DrawControlsHint() {
@@ -386,8 +525,20 @@ void UI::DrawControlsHint() {
 void UI::DrawFloatText(float x, float y, float alpha, int value) {
     Color c = COLOR_GOLD;
     c.a = (unsigned char)(255 * alpha);
-    DrawTextEx(s_font, TextFormat("+%d", value),
-               {(float)((int)x - 15), y}, UI_FONT_BODY, 1.0f, c);
+    const char* text;
+    if (value == -1) {
+        c = RED;
+        c.a = (unsigned char)(255 * alpha);
+        text = "!";
+    } else if (value == 0) {
+        c = DARKGRAY;
+        c.a = (unsigned char)(255 * alpha);
+        text = "+Raw";
+    } else {
+        text = TextFormat("+%d", value);
+    }
+    int w = TextWidth(text, UI_FONT_BODY);
+    DrawTextEx(s_font, text, {(float)((int)x - w / 2), y}, UI_FONT_BODY, 1.0f, c);
 }
 
 void UI::DrawMilestone(int streak, float timer) {

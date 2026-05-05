@@ -8,7 +8,6 @@ constexpr int SCREEN_WIDTH = 800;
 constexpr int SCREEN_HEIGHT = 600;
 
 // ── Player ────────────────────────────────────────────
-constexpr float PLAYER_SIZE = 32.0f;
 constexpr float BASE_CHEF_SPEED = 300.0f;   // px/s
 
 // ── Stations ──────────────────────────────────────────
@@ -56,13 +55,16 @@ constexpr int REWARD_KEBAB = 8;
 // ── Days ──────────────────────────────────────────────
 constexpr int TOTAL_DAYS = 7;
 constexpr int MAX_LOST = 3;
-constexpr float DAY_DIFFICULTY_STEP = 0.08f;  // 8% harder per day
+constexpr float DAY_DIFFICULTY_STEP = 0.06f;  // 6% harder per day
 constexpr std::array<int, TOTAL_DAYS> DAY_TARGETS = {5, 10, 15, 20, 25, 30, 35};
 
 // ── Key bindings ──────────────────────────────────────
 constexpr int KEY_MOVE_LEFT = KEY_A;
 constexpr int KEY_MOVE_RIGHT = KEY_D;
 constexpr int KEY_INTERACT = KEY_SPACE;
+constexpr int KEY_UPGRADE_FOUR = KEY_FOUR;
+constexpr int KEY_RECIPE_GUIDE = KEY_TAB;
+constexpr int KEY_HELP = KEY_H;
 
 // ── Layout ────────────────────────────────────────────
 constexpr float STATION_Y = 220.0f;
@@ -106,4 +108,4 @@ constexpr float UI_VICTORY_PANEL_H = 348.0f;
 constexpr float UI_UPGRADE_PANEL_X = 590.0f;
 constexpr float UI_UPGRADE_PANEL_Y = 48.0f;
 constexpr float UI_UPGRADE_PANEL_W = 200.0f;
-constexpr float UI_UPGRADE_PANEL_H = 70.0f;
+constexpr float UI_UPGRADE_PANEL_H = 90.0f;

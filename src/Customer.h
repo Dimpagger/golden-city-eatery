@@ -8,7 +8,7 @@ public:
     enum class State { ENTERING, WAITING, LEAVING };
 
     Customer(float targetX, float targetY, CustomerType type = CustomerType::NORMAL,
-             float patience = CUSTOMER_PATIENCE);
+             float patience = CUSTOMER_PATIENCE, RecipeType desired = RecipeType::ROUJIAMO);
 
     void Update(float dt);
 
@@ -23,6 +23,7 @@ public:
     float GetX() const;
     float GetY() const;
     float GetPatience() const;
+    RecipeType GetDesiredRecipe() const;
 
     void MoveTo(float newTargetX, float newTargetY);
 
@@ -30,6 +31,7 @@ private:
     float x, y;
     float targetX, targetY;
     CustomerType type = CustomerType::NORMAL;
+    RecipeType desiredRecipe = RecipeType::ROUJIAMO;
     float patience = 30.0f;
     float moveSpeed = 150.0f;
     State state = State::ENTERING;

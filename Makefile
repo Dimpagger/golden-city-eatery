@@ -16,7 +16,7 @@ target := $(buildDir)/$(executable)
 sources := $(call rwildcard,src/,*.cpp)
 objects := $(patsubst src/%, $(buildDir)/%, $(patsubst %.cpp, %.o, $(sources)))
 depends := $(patsubst %.o, %.d, $(objects))
-compileFlags := -std=c++17 -I include
+compileFlags := -std=c++17 -I include -O2 -Wall -Wextra
 linkFlags = -L lib/$(platform) -l raylib
 
 # ── Font embedding ───────────────────────────────────
@@ -64,10 +64,10 @@ endif
 .PHONY: all setup submodules execute clean setup-font font-clean
 
 # Default target, compiles, executes and cleans
-all: $(target) execute clean
+all: $(target) execute
 
 # Sets up the project for compiling, generates includes and libs
-setup: include lib
+setup: submodules include lib
 	@if [ -z "$(FONT_SRC)" ]; then \
 		echo ""; \
 		echo "  ⚠  No .ttf font found in assets/fonts/"; \
@@ -112,14 +112,15 @@ submodules:
 	git submodule update --init --recursive --depth 1
 
 # Copy the relevant header files into includes
-include: submodules
+include:
 	$(MKDIR) $(call platformpth, ./include)
 	$(call COPY,vendor/raylib/src,./include,raylib.h)
 	$(call COPY,vendor/raylib/src,./include,raymath.h)
+	$(call COPY,vendor/raylib/src,./include,rlgl.h)
 	$(call COPY,vendor/raylib-cpp/include,./include,*.hpp)
 
 # Build the raylib static library file and copy it into lib
-lib: submodules
+lib:
 	cd vendor/raylib/src $(THEN) "$(MAKE)" PLATFORM=PLATFORM_DESKTOP
 	$(MKDIR) $(call platformpth, lib/$(platform))
 	$(call COPY,vendor/raylib/src,lib/$(platform),libraylib.a)
@@ -142,7 +143,7 @@ $(buildDir)/%.o: src/%.cpp Makefile
 	$(CXX) -MMD -MP -c $(compileFlags) $< -o $@ $(CXXFLAGS)
 
 # Run the executable
-execute:
+execute: $(target)
 	$(target) $(ARGS)
 
 # Clean up all relevant files

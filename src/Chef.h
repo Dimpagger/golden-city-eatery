@@ -24,11 +24,14 @@ public:
 
     void SetSpeed(float s);
     float GetSpeed() const;
+    void ResetPosition(float newX, float newY);
+    bool IsFacingRight() const { return facingRight; }
 
 private:
     float x, y;
     float w = 32.0f;
     float h = 32.0f;
     float speed = 300.0f;
+    bool facingRight = true;
     std::unique_ptr<Food> heldFood;
 };

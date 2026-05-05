@@ -13,4 +13,4 @@ enum class RecipeType { NONE, ROUJIAMO, LIANGPI, KEBAB };
 enum class CustomerType { NORMAL, IMPATIENT, VIP };
 
 // --- Upgrade ---
-enum class UpgradeType { GRILL_SPEED, OVEN_SPEED, CHEF_SPEED };
+enum class UpgradeType { GRILL_SPEED, CUTTING_SPEED, OVEN_SPEED, CHEF_SPEED };

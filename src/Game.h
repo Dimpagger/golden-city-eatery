@@ -15,11 +15,11 @@ class Game {
 public:
     Game();
     ~Game();
+    Game(Game&&) = default;
+    Game& operator=(Game&&) = default;
 
     void Update(float dt);
     void Draw();
-
-    GameState GetState() const;
 
 private:
     void Reset();
@@ -51,12 +51,37 @@ private:
 
     bool paused = false;
 
+    Station* nearStation = nullptr;   // cached per-frame for Update+Drawing
+
     UpgradeSystem upgradeSys;
 
     float feedbackTimer = 0.0f;
     bool feedbackGrill = false;
+    bool feedbackCutting = false;
     bool feedbackAssembly = false;
     bool feedbackChef = false;
+    bool showRecipePanel = false;
+    bool showHelpPanel = false;
+
+    float shakeTimer = 0.0f;
+    float shakeIntensity = 0.0f;
+    bool endlessMode = false;
+
+    bool discoveredLiangpi = false;
+    bool discoveredKebab = false;
+
+    int totalServed = 0;
+    int totalCoins = 0;
+    int totalRoujiamo = 0;
+    int totalLiangpi = 0;
+    int totalKebab = 0;
+
+    struct Particle {
+        float x, y, vx, vy, life = 0.6f;
+        Color color;
+    };
+    std::vector<Particle> particles;
+    void SpawnParticles(float x, float y, Color color, int count);
 
     float gameOverTimer = 0.0f;
 

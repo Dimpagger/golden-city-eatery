@@ -44,6 +44,7 @@ void Game::Reset() {
     paused = false;
 
     feedbackGrill = false;
+    feedbackCutting = false;
     feedbackAssembly = false;
     feedbackChef = false;
     feedbackTimer = 0.0f;
@@ -51,6 +52,21 @@ void Game::Reset() {
     milestoneTimer = 0.0f;
     milestoneStreak = 0;
     lastLostCount = 0;
+    showRecipePanel = false;
+    showHelpPanel = false;
+    shakeTimer = 0.0f;
+    shakeIntensity = 0.0f;
+    endlessMode = false;
+
+    discoveredLiangpi = false;
+    discoveredKebab = false;
+    totalServed = 0;
+    totalCoins = 0;
+    totalRoujiamo = 0;
+    totalLiangpi = 0;
+    totalKebab = 0;
+    particles.clear();
+
     floatTexts.clear();
     upgradeSys.Reset();
 
@@ -61,7 +77,7 @@ void Game::StartDay(int day) {
     currentDay = day;
     servedToday = 0;
 
-    chef = Chef(CHEF_X_INIT, CHEF_Y);
+    chef.ResetPosition(CHEF_X_INIT, CHEF_Y);
     chef.PickUpFood(std::make_unique<Food>(FoodState::RAW));
 
     for (int i = 0; i < STATION_COUNT; i++) {
@@ -77,29 +93,43 @@ void Game::StartDay(int day) {
     milestoneStreak = 0;
     feedbackTimer = 0.0f;
     feedbackGrill = false;
+    feedbackCutting = false;
     feedbackAssembly = false;
     feedbackChef = false;
     floatTexts.clear();
 }
 
 void Game::Update(float dt) {
+    // Global: language toggle works in all states
+    if (Input::IsKeyPressed(KEY_L)) {
+        Loc::ToggleLanguage();
+    }
+
+    // --- Screen shake ---
+    if (shakeTimer > 0.0f) {
+        shakeTimer -= dt;
+    }
+
     switch (state) {
         case GameState::MENU:
             if (Input::IsKeyPressed(KEY_INTERACT)) {
                 Reset();
                 state = GameState::PLAYING;
             }
-            if (Input::IsKeyPressed(KEY_L)) {
-                Loc::ToggleLanguage();
+            if (Input::IsKeyPressed(KEY_HELP)) {
+                showHelpPanel = !showHelpPanel;
             }
             break;
 
         case GameState::PLAYING:
-            if (Input::IsKeyPressed(KEY_P)) {
+            if (Input::IsKeyPressed(KEY_P) && gameOverTimer <= 0.0f) {
                 paused = !paused;
             }
-            if (Input::IsKeyPressed(KEY_L)) {
-                Loc::ToggleLanguage();
+            if (Input::IsKeyPressed(KEY_RECIPE_GUIDE)) {
+                showRecipePanel = !showRecipePanel;
+            }
+            if (Input::IsKeyPressed(KEY_HELP)) {
+                showHelpPanel = !showHelpPanel;
             }
             if (gameOverTimer > 0.0f) {
                 gameOverTimer -= dt;
@@ -112,9 +142,15 @@ void Game::Update(float dt) {
                 if (customerMgr.GetLostCount() >= MAX_LOST) {
                     SaveHighScore();
                     gameOverTimer = 1.0f;
+                    shakeTimer = 0.5f;
+                    shakeIntensity = 10.0f;
                 } else if (servedToday >= DAY_TARGETS[currentDay - 1]) {
                     SaveHighScore();
-                    state = (currentDay >= TOTAL_DAYS) ? GameState::VICTORY : GameState::DAY_COMPLETE;
+                    if (currentDay >= TOTAL_DAYS && !endlessMode) {
+                        state = GameState::VICTORY;
+                    } else {
+                        state = GameState::DAY_COMPLETE;
+                    }
                 }
             }
             break;
@@ -131,15 +167,13 @@ void Game::Update(float dt) {
                 Reset();
                 state = GameState::PLAYING;
             }
-            if (Input::IsKeyPressed(KEY_L)) {
-                Loc::ToggleLanguage();
-            }
             break;
 
         case GameState::VICTORY:
             if (Input::IsKeyPressed(KEY_INTERACT)) {
-                Reset();
-                state = GameState::MENU;
+                endlessMode = true;
+                StartDay(currentDay + 1);
+                state = GameState::PLAYING;
             }
             break;
     }
@@ -168,11 +202,21 @@ void Game::UpdatePlaying(float dt) {
             ++it;
     }
 
+    // --- Particles ---
+    for (auto it = particles.begin(); it != particles.end(); ) {
+        it->x += it->vx * dt;
+        it->y += it->vy * dt;
+        it->life -= dt;
+        if (it->life <= 0.0f) it = particles.erase(it);
+        else ++it;
+    }
+
     // --- Feedback timer ---
     if (feedbackTimer > 0.0f) {
         feedbackTimer -= dt;
         if (feedbackTimer <= 0.0f) {
             feedbackGrill = false;
+            feedbackCutting = false;
             feedbackAssembly = false;
             feedbackChef = false;
         }
@@ -181,47 +225,105 @@ void Game::UpdatePlaying(float dt) {
     // --- Upgrades ---
     HandleUpgradeInput();
 
-    // --- Interaction ---
-    if (Input::IsKeyPressed(KEY_INTERACT)) {
-        Station* target = GetNearbyStation();
+    // --- Mouse station click ---
+    if (Input::IsMousePressed()) {
+        for (int i = 0; i < STATION_COUNT; i++) {
+            if (Input::IsMouseInRect(stations[i].GetX(), stations[i].GetY(),
+                                      stations[i].GetWidth(), stations[i].GetHeight())) {
+                nearStation = &stations[i];
+                if (chef.IsHoldingFood()) {
+                    if (nearStation->CanAccept(*chef.GetHeldFood())) {
+                        nearStation->PlaceFood(chef.DropFood());
+                        nearStation->StartWork();
+                    }
+                } else {
+                    if (nearStation->IsDone()) {
+                        chef.PickUpFood(nearStation->TakeFood());
+                    }
+                }
+                break;
+            }
+        }
+    }
 
-        if (target) {
-            if (chef.IsHoldingFood()) {
-                if (target->CanAccept(*chef.GetHeldFood())) {
-                    target->PlaceFood(chef.DropFood());
-                    target->StartWork();
-                }
-            } else {
-                if (target->IsDone()) {
-                    chef.PickUpFood(target->TakeFood());
-                } else if (target->HasFood() && target->GetState() == StationState::IDLE) {
-                    target->StartWork();
-                }
+    // --- Keyboard interaction ---
+    nearStation = GetNearbyStation();
+    if (Input::IsKeyPressed(KEY_INTERACT) && nearStation) {
+        if (chef.IsHoldingFood()) {
+            if (nearStation->CanAccept(*chef.GetHeldFood())) {
+                nearStation->PlaceFood(chef.DropFood());
+                nearStation->StartWork();
+                // SFX: play cooking start sound
+            }
+        } else {
+            if (nearStation->IsDone()) {
+                chef.PickUpFood(nearStation->TakeFood());
             }
         }
     }
 
     // --- Serving delivery ---
-    if (stations[3].IsDone() && stations[3].HasFood()) {
-        int baseReward = stations[3].GetFood()->GetReward();
-        stations[3].TakeFood();
+    auto& serving = stations[static_cast<int>(StationType::SERVING)];
+    if (serving.IsDone() && serving.HasFood()) {
+        int baseReward = serving.GetFood()->GetReward();
+        RecipeType foodRecipe = serving.GetFood()->GetRecipe();
+        serving.TakeFood();
+
+        // Recipe matching: full reward for correct recipe, half for wrong
+        const Customer* customer = customerMgr.GetFirstWaiting();
+        bool recipeMatch = customer && customer->GetDesiredRecipe() == foodRecipe;
         float mult = customerMgr.ServeFirstWaiting();
-        int reward = (int)(baseReward * mult);
+        int reward = recipeMatch ? (int)(baseReward * mult) : baseReward / 2;
+
         coins += reward;
         score++;
         streak++;
         servedToday++;
 
-        floatTexts.push_back({stations[3].GetX() + stations[3].GetWidth() / 2.0f,
-                              stations[3].GetY(), 1.0f, reward});
+        // Stats
+        totalServed++;
+        totalCoins += reward;
+        switch (foodRecipe) {
+            case RecipeType::ROUJIAMO: totalRoujiamo++; break;
+            case RecipeType::LIANGPI:  totalLiangpi++;  break;
+            case RecipeType::KEBAB:    totalKebab++;    break;
+            default: break;
+        }
 
+        // Recipe discovery
+        if (foodRecipe == RecipeType::LIANGPI && !discoveredLiangpi) {
+            discoveredLiangpi = true;
+            feedbackTimer = 2.0f;
+            milestoneTimer = 0.0f; // reuse milestone display for discovery
+            milestoneStreak = -1;   // signal "discovery" to UI
+        }
+        if (foodRecipe == RecipeType::KEBAB && !discoveredKebab) {
+            discoveredKebab = true;
+            feedbackTimer = 2.0f;
+            milestoneTimer = 0.0f;
+            milestoneStreak = -2;
+        }
+
+        floatTexts.push_back({serving.GetX() + serving.GetWidth() / 2.0f,
+                              serving.GetY(), 1.0f, reward});
+
+        // Particles on serve
+        SpawnParticles(serving.GetX() + serving.GetWidth() / 2.0f,
+                       serving.GetY(), GOLD, 6);
+
+        // SFX: play serve sound (different tone for match vs mismatch)
         if (streak > 0 && streak % MILESTONE_INTERVAL == 0) {
             milestoneTimer = 2.0f;
             milestoneStreak = streak;
+            shakeTimer = 0.3f;
+            shakeIntensity = 5.0f;
+            SpawnParticles(SCREEN_WIDTH / 2.0f, 150, ORANGE, 15);
+            // SFX: play milestone fanfare
         }
 
         if (!chef.IsHoldingFood()) {
             chef.PickUpFood(std::make_unique<Food>(FoodState::RAW));
+            floatTexts.push_back({chef.GetX() + 16, chef.GetY() - 10, 0.8f, 0});
         }
     }
 
@@ -229,6 +331,10 @@ void Game::UpdatePlaying(float dt) {
     int currentLost = customerMgr.GetLostCount();
     if (currentLost > lastLostCount) {
         streak = 0;
+        floatTexts.push_back({customerMgr.GetLastLostX(),
+                              customerMgr.GetLastLostY() - 10, 1.5f, -1});
+        shakeTimer = 0.2f;
+        shakeIntensity = 3.0f;
     }
     lastLostCount = currentLost;
 }
@@ -236,8 +342,12 @@ void Game::UpdatePlaying(float dt) {
 Station* Game::GetNearbyStation() {
     raylib::Rectangle chefRect = chef.GetRect();
     for (int i = 0; i < STATION_COUNT; i++) {
-        raylib::Rectangle sRect(stations[i].GetX(), stations[i].GetY(),
-                                stations[i].GetWidth(), stations[i].GetHeight());
+        // Use a tighter interaction zone (60% of station size)
+        const float marginX = stations[i].GetWidth() * 0.2f;
+        const float marginY = stations[i].GetHeight() * 0.2f;
+        raylib::Rectangle sRect(stations[i].GetX() + marginX, stations[i].GetY() + marginY,
+                                stations[i].GetWidth() - 2 * marginX,
+                                stations[i].GetHeight() - 2 * marginY);
         if (CheckCollisionRecs(chefRect, sRect)) {
             return &stations[i];
         }
@@ -245,13 +355,21 @@ Station* Game::GetNearbyStation() {
     return nullptr;
 }
 
-GameState Game::GetState() const { return state; }
-
 // ─── Draw ───────────────────────────────────────────
 
 void Game::Draw() {
     BeginDrawing();
     ClearBackground(RAYWHITE);
+
+    // Screen shake via 2D camera offset
+    Camera2D shakeCam = {};
+    shakeCam.zoom = 1.0f;
+    if (shakeTimer > 0.0f) {
+        float i = shakeIntensity * shakeTimer;
+        shakeCam.offset.x = ((rand() % 100) / 50.0f - 1.0f) * i;
+        shakeCam.offset.y = ((rand() % 100) / 50.0f - 1.0f) * i;
+    }
+    BeginMode2D(shakeCam);
 
     switch (state) {
         case GameState::MENU:
@@ -265,13 +383,20 @@ void Game::Draw() {
             UI::DrawDayCompleteScreen(currentDay, score, coins);
             break;
         case GameState::GAME_OVER:
-            UI::DrawGameOverScreen(score, coins, customerMgr.GetLostCount(), bestScore, currentDay);
+            UI::DrawGameOverScreen(score, coins, customerMgr.GetLostCount(), bestScore, currentDay,
+                                   totalRoujiamo, totalLiangpi, totalKebab);
             break;
         case GameState::VICTORY:
-            UI::DrawVictoryScreen(score, coins, bestScore);
+            UI::DrawVictoryScreen(score, coins, bestScore,
+                                  totalRoujiamo, totalLiangpi, totalKebab);
             break;
     }
 
+    if (showHelpPanel) {
+        UI::DrawHelpPanel();
+    }
+
+    EndMode2D();
     EndDrawing();
 }
 
@@ -294,9 +419,8 @@ void Game::DrawPlaying() {
 
     UI::DrawChef(chef);
 
-    Station* near = GetNearbyStation();
-    if (near) {
-        UI::DrawInteractionHint(*near);
+    if (nearStation) {
+        UI::DrawInteractionHint(*nearStation);
     }
 
     UI::DrawUpgradePanel(upgradeSys, coins);
@@ -306,11 +430,25 @@ void Game::DrawPlaying() {
     }
 
     if (milestoneTimer > 0.0f) {
-        UI::DrawMilestone(milestoneStreak, milestoneTimer);
+        if (milestoneStreak < 0) {
+            // Recipe discovery
+            UI::DrawDiscoveryMessage(milestoneStreak == -1 ? RecipeType::LIANGPI : RecipeType::KEBAB,
+                                     milestoneTimer);
+        } else {
+            UI::DrawMilestone(milestoneStreak, milestoneTimer);
+        }
+    }
+
+    // --- Particles ---
+    for (auto& p : particles) {
+        Color c = p.color;
+        c.a = (unsigned char)(255.0f * p.life / 0.6f);
+        DrawCircle((int)p.x, (int)p.y, 2.5f, c);
     }
 
     if (feedbackTimer > 0.0f) {
         if (feedbackGrill)       UI::DrawFeedbackMessage(Loc::T("grill_upgraded"));
+        if (feedbackCutting)     UI::DrawFeedbackMessage(Loc::T("cutting_upgraded"));
         if (feedbackAssembly)    UI::DrawFeedbackMessage(Loc::T("asm_upgraded"));
         if (feedbackChef)        UI::DrawFeedbackMessage(Loc::T("chef_upgraded"));
     }
@@ -319,39 +457,51 @@ void Game::DrawPlaying() {
         UI::DrawGameOverFlash(gameOverTimer);
     }
 
+    if (showRecipePanel) {
+        UI::DrawRecipePanel();
+    }
+
     UI::DrawControlsHint();
+}
+
+// ─── Particles ──────────────────────────────────────
+
+void Game::SpawnParticles(float x, float y, Color color, int count) {
+    for (int i = 0; i < count; i++) {
+        float angle = (float)(rand() % 360) * 3.14159f / 180.0f;
+        float speed = 50.0f + (rand() % 100);
+        particles.push_back({x, y,
+                             cosf(angle) * speed,
+                             sinf(angle) * speed - 30.0f,
+                             0.3f + (rand() % 30) / 100.0f, color});
+    }
 }
 
 // ─── Upgrades ────────────────────────────────────────
 
 void Game::ApplyUpgrades() {
-    stations[0].SetWorkTime(BASE_GRILL_TIME * upgradeSys.GetSpeedMultiplier(UpgradeType::GRILL_SPEED));
-    stations[1].SetWorkTime(BASE_CUTTING_TIME);
-    stations[2].SetWorkTime(BASE_ASSEMBLY_TIME * upgradeSys.GetSpeedMultiplier(UpgradeType::OVEN_SPEED));
-    stations[3].SetWorkTime(BASE_SERVING_TIME);
+    using S = StationType;
+    stations[static_cast<int>(S::GRILL)].SetWorkTime(BASE_GRILL_TIME * upgradeSys.GetSpeedMultiplier(UpgradeType::GRILL_SPEED));
+    stations[static_cast<int>(S::CUTTING)].SetWorkTime(BASE_CUTTING_TIME * upgradeSys.GetSpeedMultiplier(UpgradeType::CUTTING_SPEED));
+    stations[static_cast<int>(S::ASSEMBLY)].SetWorkTime(BASE_ASSEMBLY_TIME * upgradeSys.GetSpeedMultiplier(UpgradeType::OVEN_SPEED));
+    stations[static_cast<int>(S::SERVING)].SetWorkTime(BASE_SERVING_TIME);
     chef.SetSpeed(BASE_CHEF_SPEED * upgradeSys.GetSpeedMultiplier(UpgradeType::CHEF_SPEED));
 }
 
 void Game::HandleUpgradeInput() {
-    if (Input::IsKeyPressed(KEY_ONE)) {
-        if (upgradeSys.Purchase(UpgradeType::GRILL_SPEED, coins)) {
+    struct Binding { int key; UpgradeType type; bool& flag; };
+    Binding bindings[] = {
+        {KEY_ONE,        UpgradeType::GRILL_SPEED,   feedbackGrill},
+        {KEY_TWO,        UpgradeType::CUTTING_SPEED, feedbackCutting},
+        {KEY_THREE,      UpgradeType::OVEN_SPEED,    feedbackAssembly},
+        {KEY_UPGRADE_FOUR, UpgradeType::CHEF_SPEED,  feedbackChef},
+    };
+    for (auto& b : bindings) {
+        if (Input::IsKeyPressed(b.key) && upgradeSys.Purchase(b.type, coins)) {
             ApplyUpgrades();
-            feedbackGrill = true;
+            b.flag = true;
             feedbackTimer = 1.5f;
-        }
-    }
-    if (Input::IsKeyPressed(KEY_TWO)) {
-        if (upgradeSys.Purchase(UpgradeType::OVEN_SPEED, coins)) {
-            ApplyUpgrades();
-            feedbackAssembly = true;
-            feedbackTimer = 1.5f;
-        }
-    }
-    if (Input::IsKeyPressed(KEY_THREE)) {
-        if (upgradeSys.Purchase(UpgradeType::CHEF_SPEED, coins)) {
-            ApplyUpgrades();
-            feedbackChef = true;
-            feedbackTimer = 1.5f;
+            // SFX: play upgrade purchase sound
         }
     }
 }

@@ -19,6 +19,7 @@ private:
     bool CanPurchase(UpgradeType type, int coins) const;
 
     int grillLevel = 0;
+    int cuttingLevel = 0;
     int ovenLevel = 0;
     int chefSpeedLevel = 0;
     static constexpr int MAX_LEVEL = 4;
