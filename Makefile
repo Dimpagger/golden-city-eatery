@@ -16,7 +16,7 @@ target := $(buildDir)/$(executable)
 sources := $(call rwildcard,src/,*.cpp)
 objects := $(patsubst src/%, $(buildDir)/%, $(patsubst %.cpp, %.o, $(sources)))
 depends := $(patsubst %.o, %.d, $(objects))
-compileFlags := -std=c++17 -I include -O2 -Wall -Wextra
+compileFlags := -std=c++17 -isystem include -O2 -Wall -Wextra
 linkFlags = -L lib/$(platform) -l raylib
 
 # ── Font embedding ───────────────────────────────────

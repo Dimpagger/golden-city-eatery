@@ -10,12 +10,92 @@
 
 const std::string Game::HIGH_SCORE_FILE = "highscore.dat";
 
+// ─── Procedural sound generation ─────────────────────
+// All helpers allocate a temp buffer, bake samples, create a Sound, then free.
+
+static constexpr float kTwoPi = 6.28318530f;
+
+// Single sustained tone with quadratic decay envelope
+static Sound GenTone(float freq, float dur, float vol = 0.55f) {
+    const unsigned int SR = 44100;
+    unsigned int n = (unsigned int)(dur * SR);
+    short* buf = (short*)malloc(n * sizeof(short));
+    for (unsigned int i = 0; i < n; i++) {
+        float t   = (float)i / SR;
+        float env = 1.0f - (float)i / n;
+        env *= env;
+        buf[i] = (short)(env * vol * 32767.0f * sinf(kTwoPi * freq * t));
+    }
+    Wave w = { n, SR, 16, 1, buf };
+    Sound s = LoadSoundFromWave(w);
+    free(buf);
+    return s;
+}
+
+// Frequency sweep (linear) with quadratic decay envelope
+static Sound GenSweep(float f0, float f1, float dur, float vol = 0.55f) {
+    const unsigned int SR = 44100;
+    unsigned int n = (unsigned int)(dur * SR);
+    short* buf = (short*)malloc(n * sizeof(short));
+    float phase = 0.0f;
+    for (unsigned int i = 0; i < n; i++) {
+        float t   = (float)i / n;
+        float env = (1.0f - t) * (1.0f - t);
+        float freq = f0 + (f1 - f0) * t;
+        buf[i] = (short)(env * vol * 32767.0f * sinf(phase));
+        phase += kTwoPi * freq / SR;
+    }
+    Wave w = { n, SR, 16, 1, buf };
+    Sound s = LoadSoundFromWave(w);
+    free(buf);
+    return s;
+}
+
+// Sequential notes (arpeggio), each with its own decay envelope
+static Sound GenArpeggio(const float* freqs, int count, float noteDur, float vol = 0.55f) {
+    const unsigned int SR = 44100;
+    unsigned int fpn   = (unsigned int)(noteDur * SR);
+    unsigned int total = fpn * (unsigned int)count;
+    short* buf = (short*)malloc(total * sizeof(short));
+    for (int n = 0; n < count; n++) {
+        for (unsigned int i = 0; i < fpn; i++) {
+            float t   = (float)i / SR;
+            float env = 1.0f - (float)i / fpn;
+            env *= env;
+            buf[(unsigned int)n * fpn + i] =
+                (short)(env * vol * 32767.0f * sinf(kTwoPi * freqs[n] * t));
+        }
+    }
+    Wave w = { total, SR, 16, 1, buf };
+    Sound s = LoadSoundFromWave(w);
+    free(buf);
+    return s;
+}
+
+// ─────────────────────────────────────────────────────
+
 Game::Game(): chef(CHEF_X_INIT, CHEF_Y) {
     LoadHighScore();
+    InitSounds();
     Reset();
 }
 
-Game::~Game() = default;
+Game::~Game() {
+    UnloadSound(sfxCook);
+    UnloadSound(sfxServeHit);
+    UnloadSound(sfxServeMiss);
+    UnloadSound(sfxMilestone);
+    UnloadSound(sfxUpgrade);
+}
+
+void Game::InitSounds() {
+    sfxCook      = GenSweep(220.0f, 440.0f, 0.08f);            // 短促上扫音，放食物到工站
+    sfxServeHit  = GenTone(880.0f, 0.25f);                     // 清脆 ding，食谱匹配
+    sfxServeMiss = GenSweep(400.0f, 200.0f, 0.15f);            // 下滑音，食谱不匹配
+    const float arp[] = {523.0f, 659.0f, 784.0f};              // C5-E5-G5
+    sfxMilestone = GenArpeggio(arp, 3, 0.12f);                  // 里程碑三连音
+    sfxUpgrade   = GenSweep(330.0f, 660.0f, 0.18f);            // 上扫音，购买升级
+}
 
 void Game::LoadHighScore() {
     std::ifstream in(HIGH_SCORE_FILE);
@@ -236,6 +316,7 @@ void Game::UpdatePlaying(float dt) {
                     if (nearStation->CanAccept(*chef.GetHeldFood())) {
                         nearStation->PlaceFood(chef.DropFood());
                         nearStation->StartWork();
+                        PlaySound(sfxCook);
                     }
                 } else {
                     if (nearStation->IsDone()) {
@@ -254,7 +335,7 @@ void Game::UpdatePlaying(float dt) {
             if (nearStation->CanAccept(*chef.GetHeldFood())) {
                 nearStation->PlaceFood(chef.DropFood());
                 nearStation->StartWork();
-                // SFX: play cooking start sound
+                PlaySound(sfxCook);
             }
         } else {
             if (nearStation->IsDone()) {
@@ -312,14 +393,14 @@ void Game::UpdatePlaying(float dt) {
         SpawnParticles(serving.GetX() + serving.GetWidth() / 2.0f,
                        serving.GetY(), GOLD, 6);
 
-        // SFX: play serve sound (different tone for match vs mismatch)
+        PlaySound(recipeMatch ? sfxServeHit : sfxServeMiss);
         if (streak > 0 && streak % MILESTONE_INTERVAL == 0) {
             milestoneTimer = 2.0f;
             milestoneStreak = streak;
             shakeTimer = 0.3f;
             shakeIntensity = 5.0f;
             SpawnParticles(SCREEN_WIDTH / 2.0f, 150, ORANGE, 15);
-            // SFX: play milestone fanfare
+            PlaySound(sfxMilestone);
         }
 
         if (!chef.IsHoldingFood()) {
@@ -502,7 +583,7 @@ void Game::HandleUpgradeInput() {
             ApplyUpgrades();
             b.flag = true;
             feedbackTimer = 1.5f;
-            // SFX: play upgrade purchase sound
+            PlaySound(sfxUpgrade);
         }
     }
 }

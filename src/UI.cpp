@@ -180,6 +180,15 @@ void UI::DrawTopBar(int coins, int score, int queueCount,
     Color lostColor = (lostCount >= maxLost - 1) ? RED : DARKGRAY;
     DrawTextEx(s_font, TextFormat("%s %d/%d", Loc::T("lost"), lostCount, maxLost),
                {(float)x, 10}, UI_FONT_SMALL, 1.0f, lostColor);
+    x += 90;
+
+    DrawTextEx(s_font, TextFormat("%s %d", Loc::T("score"), score),
+               {(float)x, 10}, UI_FONT_SMALL, 1.0f, DARKGRAY);
+    x += 80;
+
+    Color queueColor = (queueCount >= MAX_QUEUE) ? RED : (queueCount >= 2 ? ORANGE : DARKGRAY);
+    DrawTextEx(s_font, TextFormat("%s %d/%d", Loc::T("queue"), queueCount, MAX_QUEUE),
+               {(float)x, 10}, UI_FONT_SMALL, 1.0f, queueColor);
 
     if (streak >= MILESTONE_INTERVAL) {
         Color streakColor = (streak >= 15) ? ORANGE : DARKGREEN;

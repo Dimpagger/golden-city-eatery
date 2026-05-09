@@ -73,6 +73,7 @@ static const TranslationEntry kTranslations[] = {
     {"press_menu",      "Press SPACE for Menu",    "按空格键返回菜单",    "スペースでメニュー"},
     {"press_resume",    "Press P to Resume",       "按 P 键继续",        "Pで再開"},
     {"press_start",     "Press SPACE to Start",    "按空格键开始",        "スペースでスタート"},
+    {"queue",           "Q",                       "队列",               "待ち"},
     {"raw",             "Raw",                     "生肉",               "生肉"},
     {"ready",           "READY",                   "就绪",               "準備可"},
     {"recipes_title",   "Recipes",                 "食谱",               "レシピ"},

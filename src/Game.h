@@ -15,8 +15,6 @@ class Game {
 public:
     Game();
     ~Game();
-    Game(Game&&) = default;
-    Game& operator=(Game&&) = default;
 
     void Update(float dt);
     void Draw();
@@ -98,4 +96,11 @@ private:
     std::vector<FloatText> floatTexts;
 
     static const std::string HIGH_SCORE_FILE;
+
+    Sound sfxCook      = {};
+    Sound sfxServeHit  = {};
+    Sound sfxServeMiss = {};
+    Sound sfxMilestone = {};
+    Sound sfxUpgrade   = {};
+    void InitSounds();
 };
