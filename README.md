@@ -68,7 +68,7 @@ make bin/app && make execute
 | **食物视觉指示** | 工位内彩色圆点表示食物状态（红=生/棕=熟/绿=完成） |
 | **厨师朝向** | 根据移动方向显示面向（白色眼睛指示） |
 | **游戏结束闪红** | 流失 3 名顾客后红色遮罩 + 震动 |
-| **音效钩子** | 代码内预置 6 个 SFX 接入点，放入 .wav 即可启用 |
+| **程序生成音效** | 5 种音效由正弦波合成，无需外部资源文件：放食物（上扫音）、匹配上菜（清脆 ding）、错配上菜（下滑音）、里程碑（C5-E5-G5 三连音）、购买升级（上扫音） |
 
 ### 辅助功能
 
@@ -148,14 +148,14 @@ ENTERING → WAITING → LEAVING
 ### 难度曲线
 
 ```
-dayMultiplier = 1.0 - (day - 1) × 0.06
+dayMultiplier = 1.0 - (day - 1) × 0.04
 
 Day 1: 1.00    耐心 ~30s    目标 5 人
-Day 4: 0.82    耐心 ~25s    目标 20 人
-Day 7: 0.64    耐心 ~19s    目标 35 人
+Day 4: 0.88    耐心 ~26s    目标 20 人
+Day 7: 0.76    耐心 ~23s    目标 35 人
 ```
 
-游戏内时间也会增加难度（300 秒达到峰值）：生成间隔缩短到 3-6s，耐心降到最低 12s。
+游戏内时间也会增加难度（300 秒达到峰值）：生成间隔缩短到 3-6s，耐心降到最低 15s。
 
 ### 升级数值
 
@@ -334,7 +334,8 @@ main.cpp
 - `ResetForDay(dayMult)` — 每天开始时重置，应用当日难度倍率
 - `Update(dt)` — 生成新顾客、更新等待 timer、移除离开的顾客
 - `RollCustomerType()` — 加权随机：60% Normal / 25% Impatient / 15% VIP
-- `RollRecipeType()` — 等概率随机：肉夹馍/凉皮/烤串
+- `RollRecipeType()` — 只在玩家已解锁的食谱中随机（游戏开始只有肉夹馍，首次制作凉皮/烤串后解锁对应顾客）
+- `SetAvailableRecipes(liangpi, kebab)` — 由 Game 每帧同步解锁状态
 - `GetDifficulty()` — 游戏内时间 / 300s，线性递增到 1.0
 - 移除顾客时重新排列队列位置（`MoveTo`）
 
@@ -353,7 +354,7 @@ main.cpp
 
 涵盖的绘制功能：
 - **全屏画面**：菜单、游戏结束、日完成、通关、暂停
-- **HUD 顶栏**：天数/进度、金币、最高分、流失数、连击
+- **HUD 顶栏**：天数/进度、金币、最高分、流失数、总分、队列人数、连击
 - **游戏实体**：工位（含食物圆点）、顾客（含食谱/表情）、厨师（含朝向）
 - **面板**：升级面板（4 行）、食谱参考（Tab）、游戏指南（H）
 - **特效**：浮动文字（含特殊类型）、里程碑、发现消息、粒子、闪红
@@ -393,6 +394,7 @@ UNAMEOS := $(shell uname)  # Linux / Darwin
 - **自动依赖追踪**：`-MMD -MP` 生成 .d 文件，修改头文件自动重编译
 - **增量编译**：`make` 默认不 clean（已从 all 目标移除）
 - **编译优化**：`-O2 -Wall -Wextra`
+- **Vendor 警告屏蔽**：`-isystem include` 代替 `-I include`，vendor 头文件的警告自动抑制，不影响项目源码的 warning 检查
 - **跨平台链接**：Windows（mingw）/ macOS / Linux 自动切换链接参数
 
 ### 字体嵌入（可选）
@@ -412,12 +414,11 @@ make bin/app
 
 ## CI / 多平台发布
 
-GitHub Actions（`.github/workflows/build.yml`）在每次 push 到 main 时构建 4 个平台：
+GitHub Actions（`.github/workflows/build.yml`）在每次 push 到 main 时构建 3 个平台：
 
 | 平台 | Runner | 产物 |
 |------|--------|------|
 | macOS ARM64 | `macos-latest` | `RoujiamoLegend-macOS-arm64` |
-| macOS x86_64 | `macos-13` | `RoujiamoLegend-macOS-x86_64` |
 | Windows x86_64 | `windows-latest` | `RoujiamoLegend-Windows-x86_64` |
 | Linux x86_64 | `ubuntu-latest` | `RoujiamoLegend-Linux-x86_64` |
 
