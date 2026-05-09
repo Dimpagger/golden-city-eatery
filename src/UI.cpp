@@ -432,16 +432,19 @@ void UI::DrawRecipePanel() {
     ry += 24;
 
     // Recipe paths with coin values
-    DrawTextEx(s_font, TextFormat("%s %dg: Raw -> Grill -> Cutting -> Assembly",
-               Loc::T("roujiamo"), REWARD_ROUJIAMO),
+    DrawTextEx(s_font, TextFormat("%s %dg: %s->%s->%s->%s",
+               Loc::T("roujiamo"), REWARD_ROUJIAMO,
+               Loc::T("raw"), Loc::T("grill"), Loc::T("cutting"), Loc::T("assembly")),
                {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, DARKGREEN);
     ry += 18;
-    DrawTextEx(s_font, TextFormat("%s %dg: Raw -> Cutting -> Assembly",
-               Loc::T("liangpi"), REWARD_LIANGPI),
+    DrawTextEx(s_font, TextFormat("%s %dg: %s->%s->%s",
+               Loc::T("liangpi"), REWARD_LIANGPI,
+               Loc::T("raw"), Loc::T("cutting"), Loc::T("assembly")),
                {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, DARKGRAY);
     ry += 18;
-    DrawTextEx(s_font, TextFormat("%s %dg: Raw -> Grill -> Assembly",
-               Loc::T("kebab"), REWARD_KEBAB),
+    DrawTextEx(s_font, TextFormat("%s %dg: %s->%s->%s",
+               Loc::T("kebab"), REWARD_KEBAB,
+               Loc::T("raw"), Loc::T("grill"), Loc::T("assembly")),
                {(float)rx, (float)ry}, UI_FONT_SMALL, 1.0f, DARKGRAY);
     ry += 26;
     DrawTextEx(s_font, Loc::T("customers_title"), {(float)rx, (float)ry}, UI_FONT_BODY, 1.0f, DARKGRAY);
@@ -478,16 +481,19 @@ void UI::DrawHelpPanel() {
     // --- Recipes ---
     DrawTextEx(s_font, Loc::T("help_recipes"), {(float)hx, (float)hy}, UI_FONT_HEAD, 1.0f, DARKGRAY);
     hy += 28;
-    DrawTextEx(s_font, TextFormat("RM %s  %dg: Raw -> Grill -> Cutting -> Assembly",
-               Loc::T("roujiamo"), REWARD_ROUJIAMO),
+    DrawTextEx(s_font, TextFormat("RM %s  %dg: %s->%s->%s->%s",
+               Loc::T("roujiamo"), REWARD_ROUJIAMO,
+               Loc::T("raw"), Loc::T("grill"), Loc::T("cutting"), Loc::T("assembly")),
                {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGREEN);
     hy += 20;
-    DrawTextEx(s_font, TextFormat("LP %s  %dg: Raw -> Cutting -> Assembly",
-               Loc::T("liangpi"), REWARD_LIANGPI),
+    DrawTextEx(s_font, TextFormat("LP %s  %dg: %s->%s->%s",
+               Loc::T("liangpi"), REWARD_LIANGPI,
+               Loc::T("raw"), Loc::T("cutting"), Loc::T("assembly")),
                {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
     hy += 20;
-    DrawTextEx(s_font, TextFormat("KB %s  %dg: Raw -> Grill -> Assembly",
-               Loc::T("kebab"), REWARD_KEBAB),
+    DrawTextEx(s_font, TextFormat("KB %s  %dg: %s->%s->%s",
+               Loc::T("kebab"), REWARD_KEBAB,
+               Loc::T("raw"), Loc::T("grill"), Loc::T("assembly")),
                {(float)hx + 16, (float)hy}, UI_FONT_SMALL, 1.0f, DARKGRAY);
     hy += 30;
 

@@ -185,6 +185,7 @@ void Game::UpdatePlaying(float dt) {
     for (int i = 0; i < STATION_COUNT; i++) {
         stations[i].Update(dt);
     }
+    customerMgr.SetAvailableRecipes(discoveredLiangpi, discoveredKebab);
     customerMgr.Update(dt);
 
     // --- Milestone timer ---
@@ -273,7 +274,7 @@ void Game::UpdatePlaying(float dt) {
         const Customer* customer = customerMgr.GetFirstWaiting();
         bool recipeMatch = customer && customer->GetDesiredRecipe() == foodRecipe;
         float mult = customerMgr.ServeFirstWaiting();
-        int reward = recipeMatch ? (int)(baseReward * mult) : baseReward / 2;
+        int reward = recipeMatch ? (int)(baseReward * mult) : (int)(baseReward * mult / 2.0f);
 
         coins += reward;
         score++;

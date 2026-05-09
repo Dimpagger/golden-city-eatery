@@ -88,10 +88,17 @@ const Customer* CustomerManager::GetFirstWaiting() const {
     return nullptr;
 }
 
+void CustomerManager::SetAvailableRecipes(bool liangpi, bool kebab) {
+    availLiangpi = liangpi;
+    availKebab = kebab;
+}
+
 RecipeType CustomerManager::RollRecipeType() const {
-    int roll = rand() % 3;
+    // Only roll among recipes the player has discovered
+    int count = 1 + (availLiangpi ? 1 : 0) + (availKebab ? 1 : 0);
+    int roll = rand() % count;
     if (roll == 0) return RecipeType::ROUJIAMO;
-    if (roll == 1) return RecipeType::LIANGPI;
+    if (availLiangpi && roll == 1) return RecipeType::LIANGPI;
     return RecipeType::KEBAB;
 }
 

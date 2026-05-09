@@ -42,7 +42,7 @@ constexpr int   SPAWN_WEIGHT_VIP = 15;
 constexpr float DIFFICULTY_RAMP_TIME = 300.0f;     // 5 min to max difficulty
 constexpr float SPAWN_INTERVAL_MIN_FAST = 3.0f;
 constexpr float SPAWN_INTERVAL_MAX_FAST = 6.0f;
-constexpr float PATIENCE_MIN = 12.0f;
+constexpr float PATIENCE_MIN = 15.0f;
 
 // ── Milestones ────────────────────────────────────────
 constexpr int MILESTONE_INTERVAL = 5;   // every 5 consecutive serves
@@ -55,7 +55,7 @@ constexpr int REWARD_KEBAB = 8;
 // ── Days ──────────────────────────────────────────────
 constexpr int TOTAL_DAYS = 7;
 constexpr int MAX_LOST = 3;
-constexpr float DAY_DIFFICULTY_STEP = 0.06f;  // 6% harder per day
+constexpr float DAY_DIFFICULTY_STEP = 0.04f;  // 4% harder per day
 constexpr std::array<int, TOTAL_DAYS> DAY_TARGETS = {5, 10, 15, 20, 25, 30, 35};
 
 // ── Key bindings ──────────────────────────────────────

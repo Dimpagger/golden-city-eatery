@@ -8,6 +8,7 @@ class CustomerManager {
 public:
     void ResetForDay(float dayMult);
     void Update(float dt);
+    void SetAvailableRecipes(bool liangpi, bool kebab);
     float ServeFirstWaiting();  // returns reward multiplier, 0 if none
     const Customer* GetFirstWaiting() const;  // for recipe matching
 
@@ -31,4 +32,6 @@ private:
     int lostCustomers = 0;
     float lastLostX = 0.0f;
     float lastLostY = 0.0f;
+    bool availLiangpi = false;
+    bool availKebab = false;
 };
